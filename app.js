@@ -1,133 +1,233 @@
-const initialCommands = ['move()', 'move()', 'turnLeft()', 'move()', 'collectGem()'];
-let commands = [...initialCommands];
-let executionIndex = 0;
-let state = { x: 0, y: 2, direction: 0, gems: 0, steps: 0 };
+const editor = document.querySelector('#codeEditor');
+const dungeon = document.querySelector('#dungeon');
+const output = document.querySelector('#output');
+const lineNumbers = document.querySelector('#lineNumbers');
+const clearCard = document.querySelector('#clearCard');
 
-const codeLines = document.querySelector('#codeLines');
-const grid = document.querySelector('#grid');
-const consoleText = document.querySelector('#consoleText');
-const successCard = document.querySelector('#successCard');
-const directions = [[1,0],[0,-1],[-1,0],[0,1]];
-const characterSprites = [
-  'assets/character/main-right.png',
-  'assets/character/main-up.png',
-  'assets/character/main-left.png',
-  'assets/character/main-down.png'
+const COLS = 8;
+const ROWS = 10;
+const MAX_STEPS = 20;
+const start = { x: 5, y: 8, direction: 1 };
+const target = { x: 5, y: 5 };
+const obstacles = new Set(['1,1','3,1','0,3','6,3','2,4','3,4','1,6','3,6','6,7']);
+const directions = [
+  { dx: 0, dy: 1, label: '下', sprite: 'assets/character/main-down.png' },
+  { dx: 1, dy: 0, label: '右', sprite: 'assets/character/main-right.png' },
+  { dx: 0, dy: -1, label: '上', sprite: 'assets/character/main-up.png' },
+  { dx: -1, dy: 0, label: '左', sprite: 'assets/character/main-left.png' }
 ];
-let editorMode = 'blocks';
 
-// Commands are language-neutral; future languages only need another adapter.
-const languageAdapters = {
-  python: { file: 'main.py', render: command => command }
-};
+let state;
+let parsedCommands = [];
+let executionIndex = 0;
+let running = false;
 
-function renderCode() {
-  const adapter = languageAdapters.python;
-  codeLines.innerHTML = commands.map((command, index) => {
-    const name = command.replace('()', '');
-    return `<div class="line" data-index="${index}"><span class="line-number">${index + 2}</span><code><span class="fn">${adapter.render(name)}</span><span class="paren">()</span><button class="remove" aria-label="行を削除" data-remove="${index}">×</button></code></div>`;
-  }).join('');
-  renderBlocks();
-  document.querySelectorAll('[data-remove]').forEach(btn => btn.addEventListener('click', () => {
-    commands.splice(Number(btn.dataset.remove), 1); renderCode(); resetWorld(false);
-  }));
+function resetState(showMessage = true) {
+  state = { ...start, collected: 0, steps: 0 };
+  parsedCommands = parseCode().commands;
+  executionIndex = 0;
+  running = false;
+  clearCard.classList.remove('show');
+  document.querySelector('#goalDot').classList.remove('done');
+  document.querySelector('#goalState').textContent = '未達成';
+  if (showMessage) setOutput('›', 'スタート地点に戻りました');
+  renderDungeon();
 }
 
-function renderBlocks() {
-  const info = {
-    'move()': ['↑', 'すすむ', 'move-block'],
-    'turnLeft()': ['↰', 'ひだりをむく', 'turn-block'],
-    'collectGem()': ['◇', 'しずくをひろう', 'collect-block']
-  };
-  document.querySelector('#blockStack').innerHTML = commands.map((command, index) => {
-    const [symbol, label, className] = info[command];
-    return `<div class="program-block ${className}" data-block-index="${index}"><span class="block-symbol">${symbol}</span><span>${label}</span><span class="block-code">${command}</span><button class="block-remove" data-block-remove="${index}" aria-label="ブロックを削除">×</button></div>`;
-  }).join('');
-  document.querySelectorAll('[data-block-remove]').forEach(btn => btn.addEventListener('click', () => {
-    commands.splice(Number(btn.dataset.blockRemove), 1); renderCode(); resetWorld(false);
-  }));
+function parseCode() {
+  const valid = new Set(['move()', 'turnLeft()', 'turnRight()', 'collectGet()']);
+  const commands = [];
+  const errors = [];
+  editor.value.split('\n').forEach((raw, index) => {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) return;
+    if (valid.has(line)) commands.push({ command: line, line: index + 1 });
+    else errors.push({ line: index + 1, text: line });
+  });
+  return { commands, errors };
 }
 
-function setEditorMode(mode) {
-  editorMode = mode;
-  document.querySelector('#blockArea').classList.toggle('active', mode === 'blocks');
-  document.querySelector('#codeArea').classList.toggle('active', mode === 'code');
-  document.querySelector('#blockModeBtn').classList.toggle('active', mode === 'blocks');
-  document.querySelector('#codeModeBtn').classList.toggle('active', mode === 'code');
-  document.querySelector('#blockModeBtn').setAttribute('aria-selected', mode === 'blocks');
-  document.querySelector('#codeModeBtn').setAttribute('aria-selected', mode === 'code');
-}
-
-function object(className, x, y, content = '') {
-  const el = document.createElement('div'); el.className = `tile-object ${className}`;
-  el.style.left = `${x * 78 + 5}px`; el.style.top = `${y * 78 + 5}px`; el.innerHTML = content;
-  return el;
-}
-
-function renderWorld() {
-  grid.innerHTML = '';
-  grid.append(object('rock', 1, 0, '♣'));
-  grid.append(object('rock', 4, 3, '♠'));
-  if (!state.gems) grid.append(object('gem', 2, 1, '◆'));
-  const hero = object(
-    'hero',
-    state.x,
-    state.y,
-    `<img src="${characterSprites[state.direction]}" alt="フクロウのキャラクター">`
-  );
-  grid.append(hero);
-  document.querySelector('#gemCount').textContent = state.gems;
-  document.querySelector('#stepCount').textContent = state.steps;
-}
-
-function resetWorld(message = true) {
-  state = { x: 0, y: 2, direction: 0, gems: 0, steps: 0 }; executionIndex = 0;
-  successCard.classList.remove('show');
-  document.querySelectorAll('.line').forEach(l => l.classList.remove('active'));
-  document.querySelectorAll('.program-block').forEach(l => l.classList.remove('running'));
-  if (message) consoleText.textContent = '↺ スタート地点にもどりました';
-  renderWorld();
-}
-
-function execute(command, index) {
-  document.querySelectorAll('.line').forEach(l => l.classList.remove('active'));
-  document.querySelectorAll('.program-block').forEach(l => l.classList.remove('running'));
-  document.querySelector(`.line[data-index="${index}"]`)?.classList.add('active');
-  document.querySelector(`.program-block[data-block-index="${index}"]`)?.classList.add('running');
-  state.steps++;
-  if (command === 'move()') {
-    const [dx,dy] = directions[state.direction];
-    const nx = state.x + dx, ny = state.y + dy;
-    if (nx >= 0 && nx < 5 && ny >= 0 && ny < 5) { state.x = nx; state.y = ny; consoleText.textContent = `→ すすんだ！ (${state.x + 1}, ${state.y + 1})`; }
-    else consoleText.textContent = '！これ以上はすすめないよ';
-  } else if (command === 'turnLeft()') {
-    state.direction = (state.direction + 1) % 4; consoleText.textContent = '↰ ひだりをむいた！';
-  } else if (command === 'collectGem()') {
-    if (state.x === 2 && state.y === 1) { state.gems = 1; consoleText.textContent = '✦ 光るしずくをひろった！'; setTimeout(() => successCard.classList.add('show'), 450); }
-    else consoleText.textContent = '…ここにしずくはないみたい';
+function renderDungeon() {
+  dungeon.innerHTML = '';
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const tile = document.createElement('div');
+      tile.className = 'dungeon-tile';
+      tile.style.setProperty('--x', x);
+      tile.style.setProperty('--y', y);
+      if ((x + y) % 4 === 0) tile.classList.add('moss');
+      if (obstacles.has(`${x},${y}`)) tile.classList.add('wall');
+      dungeon.append(tile);
+    }
   }
-  renderWorld();
+
+  if (!state.collected) {
+    const gem = document.createElement('div');
+    gem.className = 'dungeon-object gem';
+    gem.style.setProperty('--x', target.x);
+    gem.style.setProperty('--y', target.y);
+    gem.innerHTML = '<i></i>';
+    dungeon.append(gem);
+  }
+
+  const exit = document.createElement('div');
+  exit.className = 'dungeon-object stairs';
+  exit.style.setProperty('--x', 6);
+  exit.style.setProperty('--y', 0);
+  exit.innerHTML = '<i></i><i></i><i></i>';
+  dungeon.append(exit);
+
+  const hero = document.createElement('img');
+  hero.className = 'dungeon-object dungeon-hero';
+  hero.style.setProperty('--x', state.x);
+  hero.style.setProperty('--y', state.y);
+  hero.src = directions[state.direction].sprite;
+  hero.alt = `${directions[state.direction].label}を向くフクロウ`;
+  dungeon.append(hero);
+
+  document.querySelector('#directionLabel').textContent = directions[state.direction].label;
+  document.querySelector('#stepCount').textContent = state.steps;
+  document.querySelector('#gemCount').textContent = state.collected;
+}
+
+function setOutput(mark, message, type = '') {
+  output.className = type;
+  output.innerHTML = `<span class="prompt">${mark}</span> ${message}`;
+}
+
+function execute(commandInfo) {
+  const { command, line } = commandInfo;
+  state.steps++;
+  if (state.steps > MAX_STEPS) {
+    setOutput('×', `${line}行目: ステップ数が上限を超えました`, 'error');
+    return false;
+  }
+
+  if (command === 'move()') {
+    const direction = directions[state.direction];
+    const next = { x: state.x + direction.dx, y: state.y + direction.dy };
+    const blocked = next.x < 0 || next.x >= COLS || next.y < 0 || next.y >= ROWS || obstacles.has(`${next.x},${next.y}`);
+    if (blocked) {
+      setOutput('!', `${line}行目: 壁があって進めません`, 'warning');
+    } else {
+      state.x = next.x;
+      state.y = next.y;
+      setOutput('›', `${line}行目: move() を実行しました`);
+    }
+  }
+  if (command === 'turnLeft()') {
+    state.direction = (state.direction + 1) % 4;
+    setOutput('›', `${line}行目: 左を向きました`);
+  }
+  if (command === 'turnRight()') {
+    state.direction = (state.direction + 3) % 4;
+    setOutput('›', `${line}行目: 右を向きました`);
+  }
+  if (command === 'collectGet()') {
+    if (state.x === target.x && state.y === target.y) {
+      state.collected = 1;
+      setOutput('◆', `${line}行目: 灯を回収しました`, 'success');
+      document.querySelector('#goalDot').classList.add('done');
+      document.querySelector('#goalState').textContent = '達成';
+      setTimeout(() => clearCard.classList.add('show'), 350);
+    } else {
+      setOutput('!', `${line}行目: ここには拾えるものがありません`, 'warning');
+    }
+  }
+  renderDungeon();
+  return true;
 }
 
 async function runAll() {
-  resetWorld(false); document.querySelector('#runBtn').disabled = true;
-  for (let i = 0; i < commands.length; i++) { execute(commands[i], i); await new Promise(r => setTimeout(r, 620)); }
+  if (running) return;
+  const parsed = parseCode();
+  if (parsed.errors.length) {
+    const error = parsed.errors[0];
+    setOutput('×', `${error.line}行目: 「${error.text}」は使えない命令です`, 'error');
+    document.querySelector('#editorState').textContent = 'エラー';
+    return;
+  }
+  resetState(false);
+  parsedCommands = parsed.commands;
+  running = true;
+  document.querySelector('#runBtn').disabled = true;
+  document.querySelector('#editorState').textContent = '実行中';
+  for (let index = 0; index < parsedCommands.length; index++) {
+    if (!execute(parsedCommands[index])) break;
+    await new Promise(resolve => setTimeout(resolve, 480));
+  }
+  running = false;
   document.querySelector('#runBtn').disabled = false;
-  if (!state.gems) consoleText.textContent = '△ まだしずくをひろえていないよ。コードを変えてみよう！';
+  document.querySelector('#editorState').textContent = state.collected ? 'クリア' : '実行完了';
+  if (!state.collected) setOutput('›', '実行完了。まだ灯を回収できていません');
 }
 
-document.querySelectorAll('.command').forEach(btn => btn.addEventListener('click', () => { commands.push(btn.dataset.code); renderCode(); }));
-document.querySelector('#addLineBtn').addEventListener('click', () => commands.length && document.querySelector('.command').focus());
-document.querySelector('#resetBtn').addEventListener('click', () => { commands = [...initialCommands]; renderCode(); resetWorld(); });
-document.querySelector('#againBtn').addEventListener('click', () => resetWorld());
-document.querySelector('#runBtn').addEventListener('click', runAll);
-document.querySelector('#stepBtn').addEventListener('click', () => {
-  if (executionIndex >= commands.length) resetWorld(false);
-  execute(commands[executionIndex], executionIndex); executionIndex++;
-});
-document.querySelector('#soundBtn').addEventListener('click', e => { e.currentTarget.textContent = e.currentTarget.textContent === '♪' ? '♩' : '♪'; });
-document.querySelector('#blockModeBtn').addEventListener('click', () => setEditorMode('blocks'));
-document.querySelector('#codeModeBtn').addEventListener('click', () => setEditorMode('code'));
-document.querySelector('#dropZone').addEventListener('click', () => document.querySelector('.command').focus());
+function runStep() {
+  if (running) return;
+  if (executionIndex === 0) {
+    const parsed = parseCode();
+    if (parsed.errors.length) {
+      const error = parsed.errors[0];
+      setOutput('×', `${error.line}行目: 「${error.text}」は使えない命令です`, 'error');
+      return;
+    }
+    resetState(false);
+    parsedCommands = parsed.commands;
+  }
+  if (executionIndex >= parsedCommands.length) {
+    executionIndex = 0;
+    setOutput('›', 'すべてのコードを実行しました');
+    return;
+  }
+  execute(parsedCommands[executionIndex]);
+  executionIndex++;
+}
 
-renderCode(); renderWorld(); setEditorMode('blocks');
+function updateLineNumbers() {
+  const count = Math.max(12, editor.value.split('\n').length);
+  lineNumbers.innerHTML = Array.from({ length: count }, (_, index) => index + 1).join('<br>');
+  document.querySelector('#editorState').textContent = '編集中';
+  executionIndex = 0;
+}
+
+document.querySelectorAll('[data-insert]').forEach(button => button.addEventListener('click', () => {
+  const command = button.dataset.insert;
+  const startPosition = editor.selectionStart;
+  const before = editor.value.slice(0, startPosition);
+  const after = editor.value.slice(editor.selectionEnd);
+  const prefix = before && !before.endsWith('\n') ? '\n' : '';
+  editor.value = `${before}${prefix}${command}\n${after}`;
+  const cursor = startPosition + prefix.length + command.length + 1;
+  editor.focus();
+  editor.setSelectionRange(cursor, cursor);
+  updateLineNumbers();
+}));
+
+document.querySelector('#referenceToggle').addEventListener('click', event => {
+  const open = event.currentTarget.getAttribute('aria-expanded') === 'true';
+  event.currentTarget.setAttribute('aria-expanded', String(!open));
+  event.currentTarget.querySelector('b').textContent = open ? '+' : '−';
+  document.querySelector('#referenceBody').hidden = open;
+});
+document.querySelector('#runBtn').addEventListener('click', runAll);
+document.querySelector('#stepBtn').addEventListener('click', runStep);
+document.querySelector('#resetBtn').addEventListener('click', () => resetState());
+document.querySelector('#againBtn').addEventListener('click', () => resetState());
+document.querySelector('#clearOutput').addEventListener('click', () => setOutput('›', '出力を消去しました'));
+editor.addEventListener('input', updateLineNumbers);
+editor.addEventListener('scroll', () => { lineNumbers.scrollTop = editor.scrollTop; });
+editor.addEventListener('keydown', event => {
+  if (event.key === 'Tab') {
+    event.preventDefault();
+    const startPosition = editor.selectionStart;
+    editor.value = `${editor.value.slice(0, startPosition)}    ${editor.value.slice(editor.selectionEnd)}`;
+    editor.setSelectionRange(startPosition + 4, startPosition + 4);
+  }
+  if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();
+    runAll();
+  }
+});
+
+updateLineNumbers();
+resetState(false);

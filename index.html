@@ -1,97 +1,94 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Code Garden — あそんで学ぶプログラミング</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Dungeon — コードで進む冒険</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app-shell">
+  <div class="app">
     <header class="topbar">
-      <button class="brand" aria-label="ホーム">
-        <span class="brand-mark">⌁</span>
-        <span>Code Garden</span>
-      </button>
-      <div class="lesson-title">
-        <span class="eyebrow">CHAPTER 01</span>
-        <strong>はじめての一歩</strong>
-      </div>
-      <div class="header-actions">
-        <button class="language-badge" aria-label="使用言語">Python <span>⌄</span></button>
-        <button class="icon-button" id="soundBtn" aria-label="サウンド切替">♪</button>
-        <button class="reset-button" id="resetBtn">↺ リセット</button>
+      <a class="brand" href="#" aria-label="Code Dungeon ホーム">
+        <span class="brand-rune">⌘</span>
+        <span><b>CODE</b> DUNGEON</span>
+      </a>
+      <div class="chapter"><small>CHAPTER 01</small><strong>灯火の回廊</strong></div>
+      <div class="top-actions">
+        <span class="language">Python</span>
+        <button id="resetBtn" class="ghost-button">↺ リセット</button>
       </div>
     </header>
 
-    <main>
-      <aside class="toolbox panel">
-        <div class="panel-heading">
-          <span>コマンド</span><span class="tiny-label">DRAG & DROP</span>
-        </div>
-        <p class="hint">タップしてコードに追加しよう</p>
-        <div class="command-list">
-          <button class="command move" data-code="move()"><span class="command-icon">↑</span><span><b>すすむ</b><small>move()</small></span><i>＋</i></button>
-          <button class="command turn" data-code="turnLeft()"><span class="command-icon">↰</span><span><b>ひだりをむく</b><small>turnLeft()</small></span><i>＋</i></button>
-          <button class="command collect" data-code="collectGem()"><span class="command-icon">◇</span><span><b>ひろう</b><small>collectGem()</small></span><i>＋</i></button>
-        </div>
-        <div class="mission-card">
-          <div class="mission-top"><span>今回のミッション</span><span class="stars">★★★</span></div>
-          <h2>光るしずくを<br>ひろおう！</h2>
-          <div class="objective"><span class="check-dot">1</span><span>しずくを <b>1こ</b> ひろう</span></div>
-          <div class="objective"><span class="check-dot">2</span><span>5ステップ以内</span></div>
-        </div>
+    <main class="workspace">
+      <aside class="brief-panel">
+        <section class="mission-card">
+          <span class="section-label">MISSION</span>
+          <div class="mission-icon">◆</div>
+          <h1>迷宮の灯を<br>回収せよ</h1>
+          <p>コードを書いてフクロウを導き、奥にある灯を拾おう。</p>
+          <div class="goal"><i id="goalDot"></i><span>灯を1つ回収する</span><b id="goalState">未達成</b></div>
+        </section>
+
+        <section class="reference-card">
+          <button class="reference-toggle" id="referenceToggle" aria-expanded="true">
+            <span><small>REFERENCE</small>使える関数</span><b>−</b>
+          </button>
+          <div class="reference-body" id="referenceBody">
+            <button class="function-row" data-insert="move()"><code>move()</code><span>1マス前進</span></button>
+            <button class="function-row" data-insert="turnLeft()"><code>turnLeft()</code><span>左を向く</span></button>
+            <button class="function-row" data-insert="turnRight()"><code>turnRight()</code><span>右を向く</span></button>
+            <button class="function-row" data-insert="collectGet()"><code>collectGet()</code><span>足元の灯を拾う</span></button>
+            <p>関数を押すとカーソル位置へ挿入できます。まずは自分でタイプしてみよう。</p>
+          </div>
+        </section>
       </aside>
 
-      <section class="editor panel">
-        <div class="panel-heading editor-head">
-          <div class="mode-switch" role="tablist" aria-label="編集モード">
-            <button class="mode-tab active" id="blockModeBtn" role="tab" aria-selected="true">▦ ブロック</button>
-            <button class="mode-tab" id="codeModeBtn" role="tab" aria-selected="false">〈/〉 コード</button>
-          </div>
-          <span class="status-dot"><i></i> 準備OK</span>
+      <section class="editor-panel">
+        <div class="panel-bar">
+          <div class="file-tab"><span>●</span> main.py</div>
+          <div class="editor-state"><i></i><span id="editorState">入力待ち</span></div>
         </div>
-        <div class="workspace-area">
-          <div class="block-area active" id="blockArea">
-            <div class="start-block"><span>▶</span> スタートしたとき</div>
-            <div class="block-stack" id="blockStack"></div>
-            <button class="drop-zone" id="dropZone">＋ ここにブロックを追加</button>
-          </div>
-          <div class="code-area" id="codeArea">
-            <div class="file-strip"><span>●</span> main.py <em>Pythonへ自動変換</em></div>
-            <div class="line comment"><span class="line-number">1</span><code># しずくまで案内してあげよう</code></div>
-            <div class="code-lines" id="codeLines"></div>
-            <button class="add-line" id="addLineBtn"><span>＋</span> コマンドを追加</button>
-          </div>
+        <div class="editor-wrap">
+          <div class="line-numbers" id="lineNumbers">1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>11<br>12</div>
+          <textarea id="codeEditor" aria-label="Pythonコードエディター" spellcheck="false" autocomplete="off" autocapitalize="off"># 灯の場所まで進もう
+move()
+move()
+turnLeft()
+move()
+collectGet()</textarea>
         </div>
-        <div class="console" id="console">
-          <div class="console-label">OUTPUT</div>
-          <span id="consoleText">▶ 実行ボタンを押してみよう</span>
+        <div class="terminal">
+          <div class="terminal-head"><span>OUTPUT</span><button id="clearOutput">CLEAR</button></div>
+          <div id="output"><span class="prompt">›</span> コードを書いて実行してください</div>
         </div>
         <div class="runbar">
-          <button class="step-button" id="stepBtn">▷ 1行ずつ</button>
-          <button class="run-button" id="runBtn"><span>▶</span> コードを実行</button>
+          <span><kbd>Ctrl</kbd> + <kbd>Enter</kbd> で実行</span>
+          <button id="stepBtn" class="step-button">▷ 1行ずつ</button>
+          <button id="runBtn" class="run-button">▶ 実行する</button>
         </div>
       </section>
 
-      <section class="world panel">
-        <div class="world-sky">
-          <div class="cloud cloud-a"></div><div class="cloud cloud-b"></div>
-          <div class="world-label"><span>LIVE VIEW</span><i></i></div>
-          <div class="grid" id="grid"></div>
-          <div class="success-card" id="successCard">
-            <span class="success-spark">✦</span>
-            <strong>ミッションクリア！</strong>
-            <small>しずくを見つけたね</small>
-            <button id="againBtn">もう一度あそぶ</button>
+      <section class="dungeon-panel">
+        <div class="panel-bar dungeon-bar">
+          <span>LIVE DUNGEON</span>
+          <div><i class="live-dot"></i> 実行画面</div>
+        </div>
+        <div class="dungeon-viewport">
+          <div class="dungeon" id="dungeon" aria-label="ダンジョン"></div>
+          <div class="clear-card" id="clearCard">
+            <span>QUEST COMPLETE</span>
+            <strong>灯を手に入れた！</strong>
+            <button id="againBtn">もう一度挑戦</button>
           </div>
         </div>
-        <div class="world-footer">
-          <div><span class="gem-count">◇ <b id="gemCount">0</b>/1</span><small>あつめたしずく</small></div>
-          <div class="steps"><span>ステップ</span><b id="stepCount">0</b><em>/ 5</em></div>
+        <div class="dungeon-footer">
+          <div><small>現在の向き</small><b id="directionLabel">右</b></div>
+          <div><small>実行ステップ</small><b><span id="stepCount">0</span> / 20</b></div>
+          <div><small>回収した灯</small><b class="gold">◆ <span id="gemCount">0</span> / 1</b></div>
         </div>
       </section>
     </main>
