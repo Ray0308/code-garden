@@ -8,6 +8,12 @@ const grid = document.querySelector('#grid');
 const consoleText = document.querySelector('#consoleText');
 const successCard = document.querySelector('#successCard');
 const directions = [[1,0],[0,-1],[-1,0],[0,1]];
+const characterSprites = [
+  'assets/character/main-right.png',
+  'assets/character/main-up.png',
+  'assets/character/main-left.png',
+  'assets/character/main-down.png'
+];
 let editorMode = 'blocks';
 
 // Commands are language-neutral; future languages only need another adapter.
@@ -63,8 +69,13 @@ function renderWorld() {
   grid.append(object('rock', 1, 0, '♣'));
   grid.append(object('rock', 4, 3, '♠'));
   if (!state.gems) grid.append(object('gem', 2, 1, '◆'));
-  const hero = object('hero', state.x, state.y, '<div class="hero-body"></div>');
-  hero.style.rotate = `${state.direction * 90}deg`; grid.append(hero);
+  const hero = object(
+    'hero',
+    state.x,
+    state.y,
+    `<img src="${characterSprites[state.direction]}" alt="フクロウのキャラクター">`
+  );
+  grid.append(hero);
   document.querySelector('#gemCount').textContent = state.gems;
   document.querySelector('#stepCount').textContent = state.steps;
 }
