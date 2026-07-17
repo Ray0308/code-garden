@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Garden — あそんで学ぶプログラミング</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="brand" aria-label="ホーム">
+        <span class="brand-mark">⌁</span>
+        <span>Code Garden</span>
+      </button>
+      <div class="lesson-title">
+        <span class="eyebrow">CHAPTER 01</span>
+        <strong>はじめての一歩</strong>
+      </div>
+      <div class="header-actions">
+        <button class="language-badge" aria-label="使用言語">Python <span>⌄</span></button>
+        <button class="icon-button" id="soundBtn" aria-label="サウンド切替">♪</button>
+        <button class="reset-button" id="resetBtn">↺ リセット</button>
+      </div>
+    </header>
+
+    <main>
+      <aside class="toolbox panel">
+        <div class="panel-heading">
+          <span>コマンド</span><span class="tiny-label">DRAG & DROP</span>
+        </div>
+        <p class="hint">タップしてコードに追加しよう</p>
+        <div class="command-list">
+          <button class="command move" data-code="move()"><span class="command-icon">↑</span><span><b>すすむ</b><small>move()</small></span><i>＋</i></button>
+          <button class="command turn" data-code="turnLeft()"><span class="command-icon">↰</span><span><b>ひだりをむく</b><small>turnLeft()</small></span><i>＋</i></button>
+          <button class="command collect" data-code="collectGem()"><span class="command-icon">◇</span><span><b>ひろう</b><small>collectGem()</small></span><i>＋</i></button>
+        </div>
+        <div class="mission-card">
+          <div class="mission-top"><span>今回のミッション</span><span class="stars">★★★</span></div>
+          <h2>光るしずくを<br>ひろおう！</h2>
+          <div class="objective"><span class="check-dot">1</span><span>しずくを <b>1こ</b> ひろう</span></div>
+          <div class="objective"><span class="check-dot">2</span><span>5ステップ以内</span></div>
+        </div>
+      </aside>
+
+      <section class="editor panel">
+        <div class="panel-heading editor-head">
+          <div class="mode-switch" role="tablist" aria-label="編集モード">
+            <button class="mode-tab active" id="blockModeBtn" role="tab" aria-selected="true">▦ ブロック</button>
+            <button class="mode-tab" id="codeModeBtn" role="tab" aria-selected="false">〈/〉 コード</button>
+          </div>
+          <span class="status-dot"><i></i> 準備OK</span>
+        </div>
+        <div class="workspace-area">
+          <div class="block-area active" id="blockArea">
+            <div class="start-block"><span>▶</span> スタートしたとき</div>
+            <div class="block-stack" id="blockStack"></div>
+            <button class="drop-zone" id="dropZone">＋ ここにブロックを追加</button>
+          </div>
+          <div class="code-area" id="codeArea">
+            <div class="file-strip"><span>●</span> main.py <em>Pythonへ自動変換</em></div>
+            <div class="line comment"><span class="line-number">1</span><code># しずくまで案内してあげよう</code></div>
+            <div class="code-lines" id="codeLines"></div>
+            <button class="add-line" id="addLineBtn"><span>＋</span> コマンドを追加</button>
+          </div>
+        </div>
+        <div class="console" id="console">
+          <div class="console-label">OUTPUT</div>
+          <span id="consoleText">▶ 実行ボタンを押してみよう</span>
+        </div>
+        <div class="runbar">
+          <button class="step-button" id="stepBtn">▷ 1行ずつ</button>
+          <button class="run-button" id="runBtn"><span>▶</span> コードを実行</button>
+        </div>
+      </section>
+
+      <section class="world panel">
+        <div class="world-sky">
+          <div class="cloud cloud-a"></div><div class="cloud cloud-b"></div>
+          <div class="world-label"><span>LIVE VIEW</span><i></i></div>
+          <div class="grid" id="grid"></div>
+          <div class="success-card" id="successCard">
+            <span class="success-spark">✦</span>
+            <strong>ミッションクリア！</strong>
+            <small>しずくを見つけたね</small>
+            <button id="againBtn">もう一度あそぶ</button>
+          </div>
+        </div>
+        <div class="world-footer">
+          <div><span class="gem-count">◇ <b id="gemCount">0</b>/1</span><small>あつめたしずく</small></div>
+          <div class="steps"><span>ステップ</span><b id="stepCount">0</b><em>/ 5</em></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
