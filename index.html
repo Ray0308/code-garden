@@ -8,8 +8,28 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=20260718-2">
+  <link rel="stylesheet" href="title.css?v=20260718-1">
 </head>
 <body>
+  <section class="title-screen" id="titleScreen">
+    <div class="title-noise"></div>
+    <div class="title-content">
+      <span class="title-kicker">CODE-BASED DUNGEON</span>
+      <h1><span id="birdNameTitle">モフ</span>の<br>迷宮写経</h1>
+      <div class="title-hero"><img src="assets/character/main-down.png" alt="冒険するフクロウ"><i></i><b></b></div>
+      <p>小さな羽根と、書いたコードで、迷宮の奥へ。</p>
+      <button class="title-primary" id="startAdventure">冒険をはじめる</button>
+      <button class="title-secondary" id="openRecords">戦績・学習記録</button>
+      <small class="version">PROTOTYPE v0.2</small>
+    </div>
+  </section>
+  <section class="records-modal" id="recordsModal" aria-hidden="true">
+    <div class="records-card">
+      <div class="records-head"><div><small>LEARNING PATH</small><h2>迷宮の攻略記録</h2></div><button id="closeRecords">×</button></div>
+      <div class="floor-list" id="floorList"></div>
+      <p class="records-note">階層を進むたび、実際のPython構文が解放されます。</p>
+    </div>
+  </section>
   <div class="app">
     <header class="topbar">
       <a class="brand" href="#" aria-label="Code Dungeon ホーム">

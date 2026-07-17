@@ -3,6 +3,13 @@ const dungeon = document.querySelector('#dungeon');
 const output = document.querySelector('#output');
 const lineNumbers = document.querySelector('#lineNumbers');
 const clearCard = document.querySelector('#clearCard');
+const GAME = { birdName: 'モフ', storageKey: 'code-dungeon-progress-v1' };
+const curriculum = [
+  { floor: 1, title: '灯火の回廊', topic: '関数を順番に実行', syntax: 'move() / turnLeft()' },
+  { floor: 2, title: '反復の石廊', topic: '同じ処理を繰り返す', syntax: 'for _ in range(3):' },
+  { floor: 3, title: '分岐の番人', topic: '状況によって動きを変える', syntax: 'if frontIsClear():' },
+  { floor: 4, title: '関数工房', topic: '自分の命令を定義する', syntax: 'def crossRoom():' }
+];
 
 const COLS = 8;
 const ROWS = 10;
@@ -21,6 +28,27 @@ let state;
 let parsedCommands = [];
 let executionIndex = 0;
 let running = false;
+
+function loadProgress() {
+  try { return JSON.parse(localStorage.getItem(GAME.storageKey)) || { cleared: [] }; }
+  catch { return { cleared: [] }; }
+}
+
+function saveProgress(floor) {
+  const progress = loadProgress();
+  if (!progress.cleared.includes(floor)) progress.cleared.push(floor);
+  localStorage.setItem(GAME.storageKey, JSON.stringify(progress));
+  renderCurriculum();
+}
+
+function renderCurriculum() {
+  const progress = loadProgress();
+  document.querySelector('#floorList').innerHTML = curriculum.map(item => {
+    const cleared = progress.cleared.includes(item.floor);
+    const unlocked = item.floor === 1 || progress.cleared.includes(item.floor - 1);
+    return `<article class="floor-card ${cleared ? 'cleared' : ''} ${unlocked ? '' : 'locked'}"><span>FLOOR ${String(item.floor).padStart(2, '0')}</span><div><strong>${item.title}</strong><small>${item.topic}</small><code>${item.syntax}</code></div><b>${cleared ? '✓ CLEAR' : unlocked ? '挑戦可能' : '🔒'}</b></article>`;
+  }).join('');
+}
 
 function resetState(showMessage = true) {
   state = { ...start, collected: 0, steps: 0 };
@@ -129,6 +157,7 @@ function execute(commandInfo) {
       setOutput('◆', `${line}行目: 灯を回収しました`, 'success');
       document.querySelector('#goalDot').classList.add('done');
       document.querySelector('#goalState').textContent = '達成';
+      saveProgress(1);
       setTimeout(() => clearCard.classList.add('show'), 350);
     } else {
       setOutput('!', `${line}行目: ここには拾えるものがありません`, 'warning');
@@ -214,6 +243,10 @@ document.querySelector('#stepBtn').addEventListener('click', runStep);
 document.querySelector('#resetBtn').addEventListener('click', () => resetState());
 document.querySelector('#againBtn').addEventListener('click', () => resetState());
 document.querySelector('#clearOutput').addEventListener('click', () => setOutput('›', '出力を消去しました'));
+document.querySelector('#birdNameTitle').textContent = GAME.birdName;
+document.querySelector('#startAdventure').addEventListener('click', () => document.querySelector('#titleScreen').classList.add('hidden'));
+document.querySelector('#openRecords').addEventListener('click', () => { renderCurriculum(); document.querySelector('#recordsModal').classList.add('show'); document.querySelector('#recordsModal').setAttribute('aria-hidden', 'false'); });
+document.querySelector('#closeRecords').addEventListener('click', () => { document.querySelector('#recordsModal').classList.remove('show'); document.querySelector('#recordsModal').setAttribute('aria-hidden', 'true'); });
 editor.addEventListener('input', updateLineNumbers);
 editor.addEventListener('scroll', () => { lineNumbers.scrollTop = editor.scrollTop; });
 editor.addEventListener('keydown', event => {
@@ -230,4 +263,5 @@ editor.addEventListener('keydown', event => {
 });
 
 updateLineNumbers();
+renderCurriculum();
 resetState(false);
