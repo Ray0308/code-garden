@@ -3,12 +3,40 @@ const dungeon = document.querySelector('#dungeon');
 const output = document.querySelector('#output');
 const lineNumbers = document.querySelector('#lineNumbers');
 const clearCard = document.querySelector('#clearCard');
-const GAME = { birdName: 'モフ', storageKey: 'code-dungeon-progress-v1' };
+const GAME = { birdName: 'フォっくん', storageKey: 'code-dungeon-progress-v1' };
 const curriculum = [
   { floor: 1, title: '灯火の回廊', topic: '関数を順番に実行', syntax: 'move() / turnLeft()' },
   { floor: 2, title: '反復の石廊', topic: '同じ処理を繰り返す', syntax: 'for _ in range(3):' },
   { floor: 3, title: '分岐の番人', topic: '状況によって動きを変える', syntax: 'if frontIsClear():' },
   { floor: 4, title: '関数工房', topic: '自分の命令を定義する', syntax: 'def crossRoom():' }
+];
+
+const testAnswers = [
+  { floor: 1, label: '灯火の回廊・完全回答', ready: true, code: `move()
+move()
+turnLeft()
+move()
+move()
+turnLeft()
+move()
+move()
+turnRight()
+move()
+collectGet()` },
+  { floor: 2, label: '反復の石廊・想定回答', ready: false, code: `for _ in range(3):
+    move()
+turnRight()
+for _ in range(2):
+    move()` },
+  { floor: 3, label: '分岐の番人・想定回答', ready: false, code: `if frontIsClear():
+    move()
+else:
+    turnLeft()` },
+  { floor: 4, label: '関数工房・想定回答', ready: false, code: `def crossRoom():
+    for _ in range(3):
+        move()
+
+crossRoom()` }
 ];
 
 const COLS = 8;
@@ -48,6 +76,23 @@ function renderCurriculum() {
     const unlocked = item.floor === 1 || progress.cleared.includes(item.floor - 1);
     return `<article class="floor-card ${cleared ? 'cleared' : ''} ${unlocked ? '' : 'locked'}"><span>FLOOR ${String(item.floor).padStart(2, '0')}</span><div><strong>${item.title}</strong><small>${item.topic}</small><code>${item.syntax}</code></div><b>${cleared ? '✓ CLEAR' : unlocked ? '挑戦可能' : '🔒'}</b></article>`;
   }).join('');
+}
+
+function renderTestAnswers() {
+  const answerList = document.querySelector('#answerList');
+  answerList.innerHTML = testAnswers.map((answer, index) => `
+    <article class="answer-card">
+      <div><strong>FLOOR ${String(answer.floor).padStart(2, '0')}　${answer.label}</strong><small>${answer.ready ? '現在のゲームで動作確認済み' : '階層実装後の確認用'}</small></div>
+      <pre><code>${answer.code}</code></pre>
+      <button type="button" data-answer-index="${index}">コピー</button>
+    </article>`).join('');
+  answerList.querySelectorAll('[data-answer-index]').forEach(button => {
+    button.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(testAnswers[Number(button.dataset.answerIndex)].code);
+      button.textContent = 'コピーしました';
+      setTimeout(() => { button.textContent = 'コピー'; }, 1200);
+    });
+  });
 }
 
 function resetState(showMessage = true) {
@@ -264,4 +309,5 @@ editor.addEventListener('keydown', event => {
 
 updateLineNumbers();
 renderCurriculum();
+renderTestAnswers();
 resetState(false);
