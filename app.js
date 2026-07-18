@@ -5,10 +5,11 @@ const lineNumbers = document.querySelector('#lineNumbers');
 const clearCard = document.querySelector('#clearCard');
 const GAME = { birdName: 'フォっくん', storageKey: 'code-dungeon-progress-v1' };
 const curriculum = [
-  { floor: 1, title: '灯火の回廊', topic: '関数を順番に実行', syntax: 'move() / turnLeft()' },
+  { floor: 1, title: '灯火の回廊', topic: '基本命令とaction', syntax: 'move() / action()' },
   { floor: 2, title: '反復の石廊', topic: '同じ処理を繰り返す', syntax: 'for _ in range(3):' },
-  { floor: 3, title: '分岐の番人', topic: '状況によって動きを変える', syntax: 'if frontIsClear():' },
-  { floor: 4, title: '関数工房', topic: '自分の命令を定義する', syntax: 'def crossRoom():' }
+  { floor: 3, title: '言霊の扉', topic: '文字列を扉へ出力する', syntax: 'print("合言葉")' },
+  { floor: 4, title: '問いかけの門', topic: '入力を変数に保存する', syntax: 'answer = input("質問")' },
+  { floor: 5, title: '魔物の回廊', topic: '敵と同族で行動を変える', syntax: 'if isEnemy():' }
 ];
 
 const testAnswers = [
@@ -22,7 +23,7 @@ move()
 move()
 turnRight()
 move()
-collectGet()
+action()
 move()
 move()
 move()
@@ -30,33 +31,52 @@ move()
 move()
 turnRight()
 move()
-goDown()` },
+action()` },
   { floor: 2, label: '反復の石廊・完全回答', ready: true, code: `for _ in range(4):
     move()
 turnRight()
 for _ in range(3):
     move()
-collectGet()
+action()
 turnLeft()
 for _ in range(2):
     move()
-goDown()` },
-  { floor: 3, label: '分岐の番人・想定回答', ready: false, code: `if frontIsClear():
+action()` },
+  { floor: 3, label: '言霊の扉・完全回答', ready: true, code: `for _ in range(3):
     move()
-else:
-    turnLeft()` },
-  { floor: 4, label: '関数工房・想定回答', ready: false, code: `def crossRoom():
-    for _ in range(3):
-        move()
-
-crossRoom()` }
+print("小さな羽根")
+for _ in range(3):
+    move()
+action()` },
+  { floor: 4, label: '問いかけの門・完全回答', ready: true, code: `for _ in range(3):
+    move()
+password = input("合言葉：")
+turnRight()
+for _ in range(3):
+    move()
+print(password)
+turnLeft()
+for _ in range(3):
+    move()
+action()` },
+  { floor: 5, label: '魔物の回廊・完全回答', ready: true, code: `for _ in range(3):
+    move()
+    if isEnemy():
+        attack()
+    else:
+        greet()
+move()
+action()` }
 ];
 
 const COLS = 8;
 const ROWS = 10;
 const levels = {
-  1: { title: '灯火の回廊', start: { x: 5, y: 8, direction: 1 }, target: { x: 5, y: 5 }, exit: { x: 6, y: 0 }, maxSteps: 20, obstacles: ['1,1','3,1','0,3','6,3','2,4','3,4','1,6','3,6','6,7'], starter: '# 灯を回収して階段を降りよう\nmove()\nmove()' },
-  2: { title: '反復の石廊', start: { x: 1, y: 8, direction: 2 }, target: { x: 4, y: 4 }, exit: { x: 4, y: 2 }, maxSteps: 20, obstacles: ['0,2','2,2','6,2','6,3','2,5','6,5','2,6','4,7','6,8'], starter: '# 同じ命令は for で繰り返そう\nfor _ in range(4):\n    move()' }
+  1: { title: '灯火の回廊', mission: '迷宮の灯を回収せよ', description: '基本命令とaction()を使い、灯を拾って階段を降りよう。', start: { x: 5, y: 8, direction: 1 }, target: { x: 5, y: 5 }, exit: { x: 6, y: 0 }, maxSteps: 20, obstacles: ['1,1','3,1','0,3','6,3','2,4','3,4','1,6','3,6','6,7'], starter: '# 灯を回収して階段を降りよう\nmove()\nmove()', goal: '灯を回収して階段を降りる' },
+  2: { title: '反復の石廊', mission: '反復で石廊を抜けよ', description: 'move()の連打をforに置き換え、長い通路を攻略しよう。', start: { x: 1, y: 8, direction: 2 }, target: { x: 4, y: 4 }, exit: { x: 4, y: 2 }, maxSteps: 20, obstacles: ['0,2','2,2','6,2','6,3','2,5','6,5','2,6','4,7','6,8'], starter: '# 同じ命令は for で繰り返そう\nfor _ in range(4):\n    move()', goal: 'forを使って灯を回収する' },
+  3: { title: '言霊の扉', mission: '言霊を扉へ出力せよ', description: '扉の前で正しい文字列をprint()し、封印を解こう。', start: { x: 3, y: 8, direction: 2 }, exit: { x: 3, y: 2 }, door: { x: 3, y: 5, password: '小さな羽根' }, maxSteps: 20, obstacles: ['1,2','5,2','1,4','5,4','1,6','5,6','1,8','5,8'], starter: '# 扉の前で合言葉を出力しよう\nfor _ in range(3):\n    move()', goal: 'print()で言霊の扉を開く' },
+  4: { title: '問いかけの門', mission: '門番の言葉を届けよ', description: 'input()で受け取った言葉を変数へ保存し、扉へprint()しよう。', start: { x: 1, y: 8, direction: 2 }, exit: { x: 4, y: 2 }, npc: { x: 1, y: 5, answer: '月影' }, door: { x: 4, y: 5, password: '月影' }, maxSteps: 25, obstacles: ['0,3','2,3','6,3','0,7','6,7'], starter: '# 門番の問いに答え、変数へ保存しよう\nfor _ in range(3):\n    move()', goal: 'input()の答えを扉へ出力する' },
+  5: { title: '魔物の回廊', mission: '敵と同族を見極めよ', description: 'isEnemy()で判定し、敵には攻撃、同族には挨拶しよう。', start: { x: 3, y: 8, direction: 2 }, exit: { x: 3, y: 4 }, mobs: [{ x: 3, y: 7, type: 'enemy' },{ x: 3, y: 6, type: 'ally' },{ x: 3, y: 5, type: 'enemy' }], maxSteps: 30, obstacles: ['1,4','5,4','1,6','5,6','1,8','5,8'], starter: '# 敵なら攻撃、同族なら挨拶しよう\nfor _ in range(3):\n    move()', goal: 'ifで3体のMOBに対応する' }
 };
 const directions = [
   { dx: 0, dy: 1, label: '下', sprite: 'assets/character/main-down.png' },
@@ -70,6 +90,7 @@ let parsedCommands = [];
 let executionIndex = 0;
 let running = false;
 let currentFloor = 1;
+let enemySprites = {};
 
 function level() { return levels[currentFloor]; }
 
@@ -104,9 +125,16 @@ function selectFloor(floor) {
   document.querySelector('.chapter small').textContent = `CHAPTER ${String(floor).padStart(2, '0')}`;
   document.querySelector('.chapter strong').textContent = level().title;
   document.querySelector('#loopReference').hidden = floor < 2;
+  document.querySelector('#printReference').hidden = floor < 3;
+  document.querySelector('#inputReference').hidden = floor < 4;
+  document.querySelector('#ifReference').hidden = floor < 5;
+  document.querySelector('#missionTitle').textContent = level().mission;
+  document.querySelector('#missionDescription').textContent = level().description;
+  document.querySelector('#goalState').previousElementSibling.textContent = level().goal;
   editor.value = level().starter;
   document.querySelector('#recordsModal').classList.remove('show');
   document.querySelector('#recordsModal').setAttribute('aria-hidden', 'true');
+  document.querySelector('#titleScreen').classList.add('hidden');
   updateLineNumbers();
   resetState();
 }
@@ -129,7 +157,7 @@ function renderTestAnswers() {
 }
 
 function resetState(showMessage = true) {
-  state = { ...level().start, collected: 0, cleared: false, steps: 0 };
+  state = { ...level().start, collected: 0, cleared: false, doorOpen: false, steps: 0, variables: {}, resolvedMobs: [] };
   parsedCommands = parseCode().commands;
   executionIndex = 0;
   running = false;
@@ -141,41 +169,60 @@ function resetState(showMessage = true) {
 }
 
 function parseCode() {
-  const valid = new Set(['move()', 'turnLeft()', 'turnRight()', 'collectGet()', 'goDown()']);
-  const commands = [];
+  const valid = new Set(['move()', 'turnLeft()', 'turnRight()', 'collectGet()', 'goDown()', 'action()', 'attack()', 'greet()']);
   const errors = [];
-  const lines = editor.value.split('\n');
-  for (let index = 0; index < lines.length; index++) {
-    const raw = lines[index];
-    const line = raw.trim();
-    if (!line || line.startsWith('#')) continue;
-    const loop = line.match(/^for\s+_\s+in\s+range\((\d+)\):$/);
-    if (loop) {
-      if (currentFloor < 2) {
-        errors.push({ line: index + 1, text: 'for は第2階層で解放されます' });
+  const lines = editor.value.split('\n').map(raw => raw.replace(/\t/g, '    '));
+
+  function parseBlock(startIndex, indent) {
+    const commands = [];
+    let index = startIndex;
+    while (index < lines.length) {
+      const raw = lines[index];
+      const text = raw.trim();
+      if (!text || text.startsWith('#')) { index++; continue; }
+      const spaces = raw.length - raw.trimStart().length;
+      if (spaces < indent || (indent > 0 && spaces === indent - 4 && text === 'else:')) break;
+      if (spaces > indent) { errors.push({ line: index + 1, text: 'インデントが多すぎます' }); index++; continue; }
+
+      const loop = text.match(/^for\s+_\s+in\s+range\((\d+)\):$/);
+      if (loop) {
+        if (currentFloor < 2) errors.push({ line: index + 1, text: 'for は第2階層で解放されます' });
+        const parsed = parseBlock(index + 1, indent + 4);
+        const repeat = Number(loop[1]);
+        if (!parsed.commands.length) errors.push({ line: index + 1, text: 'for の中にインデントした命令が必要です' });
+        if (repeat < 1 || repeat > 10) errors.push({ line: index + 1, text: 'range() は1〜10にしてください' });
+        else for (let count = 0; count < repeat; count++) commands.push(...parsed.commands);
+        index = parsed.index;
         continue;
       }
-      const body = [];
-      let next = index + 1;
-      while (next < lines.length && (/^\s+/.test(lines[next]) || !lines[next].trim())) {
-        const nested = lines[next].trim();
-        if (nested && !nested.startsWith('#')) {
-          if (valid.has(nested)) body.push({ command: nested, line: next + 1 });
-          else errors.push({ line: next + 1, text: nested });
-        }
-        next++;
+
+      if (text === 'if isEnemy():') {
+        if (currentFloor < 5) errors.push({ line: index + 1, text: 'if は第5階層で解放されます' });
+        const thenBlock = parseBlock(index + 1, indent + 4);
+        index = thenBlock.index;
+        let elseCommands = [];
+        if (index < lines.length && lines[index].trim() === 'else:' && lines[index].length - lines[index].trimStart().length === indent) {
+          const elseBlock = parseBlock(index + 1, indent + 4);
+          elseCommands = elseBlock.commands;
+          index = elseBlock.index;
+        } else errors.push({ line: index + 1, text: 'if に対応する else: が必要です' });
+        commands.push({ command: 'conditional', line: startIndex + 1, thenCommands: thenBlock.commands, elseCommands });
+        continue;
       }
-      if (!body.length) errors.push({ line: index + 1, text: 'for の中にインデントした命令が必要です' });
-      const repeat = Number(loop[1]);
-      if (repeat < 1 || repeat > 10) errors.push({ line: index + 1, text: 'range() は1〜10にしてください' });
-      else for (let count = 0; count < repeat; count++) commands.push(...body);
-      index = next - 1;
-      continue;
+
+      const input = text.match(/^([A-Za-z_]\w*)\s*=\s*input\((['"])(.*?)\2\)$/);
+      if (input && currentFloor < 4) errors.push({ line: index + 1, text: 'input は第4階層で解放されます' });
+      if (input) { commands.push({ command: 'input', variable: input[1], prompt: input[3], line: index + 1 }); index++; continue; }
+      const print = text.match(/^print\((.+)\)$/);
+      if (print && currentFloor < 3) errors.push({ line: index + 1, text: 'print は第3階層で解放されます' });
+      if (print) { commands.push({ command: 'print', value: print[1].trim(), line: index + 1 }); index++; continue; }
+      if (valid.has(text)) commands.push({ command: text, line: index + 1 });
+      else errors.push({ line: index + 1, text });
+      index++;
     }
-    if (valid.has(line)) commands.push({ command: line, line: index + 1 });
-    else errors.push({ line: index + 1, text: line });
+    return { commands, index };
   }
-  return { commands, errors };
+  return { commands: parseBlock(0, 0).commands, errors };
 }
 
 function renderDungeon() {
@@ -192,7 +239,7 @@ function renderDungeon() {
     }
   }
 
-  if (!state.collected) {
+  if (level().target && !state.collected) {
     const gem = document.createElement('div');
     gem.className = 'dungeon-object gem';
     gem.style.setProperty('--x', level().target.x);
@@ -208,6 +255,36 @@ function renderDungeon() {
   stairs.innerHTML = '<i></i><i></i><i></i>';
   dungeon.append(stairs);
 
+  if (level().door && !state.doorOpen) {
+    const door = document.createElement('div');
+    door.className = 'dungeon-object password-door';
+    door.style.setProperty('--x', level().door.x);
+    door.style.setProperty('--y', level().door.y);
+    door.textContent = '⌨';
+    dungeon.append(door);
+  }
+
+  if (level().npc) {
+    const npc = document.createElement('img');
+    npc.className = 'dungeon-object dungeon-mob';
+    npc.style.setProperty('--x', level().npc.x);
+    npc.style.setProperty('--y', level().npc.y);
+    npc.src = 'assets/mob/ally/down.png';
+    npc.alt = '門番のフクロウ';
+    dungeon.append(npc);
+  }
+
+  (level().mobs || []).forEach((mob, index) => {
+    if (state.resolvedMobs.includes(index)) return;
+    const image = document.createElement('img');
+    image.className = `dungeon-object dungeon-mob ${mob.type}`;
+    image.style.setProperty('--x', mob.x);
+    image.style.setProperty('--y', mob.y);
+    image.src = mob.type === 'ally' ? 'assets/mob/ally/down.png' : (enemySprites.down || 'assets/mob/enemy/sheet-chroma.png');
+    image.alt = mob.type === 'ally' ? '同族のフクロウ' : '敵のフクロウ';
+    dungeon.append(image);
+  });
+
   const hero = document.createElement('img');
   hero.className = 'dungeon-object dungeon-hero';
   hero.style.setProperty('--x', state.x);
@@ -218,7 +295,17 @@ function renderDungeon() {
 
   document.querySelector('#directionLabel').textContent = directions[state.direction].label;
   document.querySelector('#stepCount').textContent = state.steps;
-  document.querySelector('#gemCount').textContent = state.collected;
+  document.querySelector('#maxStepCount').textContent = level().maxSteps;
+  if (level().target) {
+    document.querySelector('#statLabel').textContent = '回収した灯';
+    document.querySelector('#statValue').textContent = `◆ ${state.collected} / 1`;
+  } else if (level().mobs) {
+    document.querySelector('#statLabel').textContent = '対応したMOB';
+    document.querySelector('#statValue').textContent = `${state.resolvedMobs.length} / ${level().mobs.length}`;
+  } else {
+    document.querySelector('#statLabel').textContent = '言霊の扉';
+    document.querySelector('#statValue').textContent = state.doorOpen ? 'OPEN' : 'LOCKED';
+  }
 }
 
 function setOutput(mark, message, type = '') {
@@ -226,8 +313,15 @@ function setOutput(mark, message, type = '') {
   output.innerHTML = `<span class="prompt">${mark}</span> ${message}`;
 }
 
-function execute(commandInfo) {
+async function execute(commandInfo) {
   const { command, line } = commandInfo;
+  if (command === 'conditional') {
+    const mobIndex = (level().mobs || []).findIndex(mob => mob.x === state.x && mob.y === state.y);
+    const isEnemy = mobIndex >= 0 && level().mobs[mobIndex].type === 'enemy';
+    const branch = isEnemy ? commandInfo.thenCommands : commandInfo.elseCommands;
+    for (const nested of branch) if (!await execute(nested)) return false;
+    return true;
+  }
   state.steps++;
   if (state.steps > level().maxSteps) {
     setOutput('×', `${line}行目: ステップ数が上限を超えました`, 'error');
@@ -235,6 +329,12 @@ function execute(commandInfo) {
   }
 
   if (command === 'move()') {
+    const standingMob = (level().mobs || []).findIndex((mob, index) => mob.x === state.x && mob.y === state.y && !state.resolvedMobs.includes(index));
+    if (standingMob >= 0) {
+      setOutput('!', `${line}行目: 目の前のMOBに対応しないと進めません`, 'warning');
+      renderDungeon();
+      return false;
+    }
     const direction = directions[state.direction];
     const next = { x: state.x + direction.dx, y: state.y + direction.dy };
     const blocked = next.x < 0 || next.x >= COLS || next.y < 0 || next.y >= ROWS || level().obstacles.includes(`${next.x},${next.y}`);
@@ -255,13 +355,72 @@ function execute(commandInfo) {
     setOutput('›', `${line}行目: 右を向きました`);
   }
   if (command === 'collectGet()') {
-    if (state.x === level().target.x && state.y === level().target.y) {
+    if (level().target && state.x === level().target.x && state.y === level().target.y) {
       state.collected = 1;
       setOutput('◆', `${line}行目: 灯を回収しました`, 'success');
       document.querySelector('#goalDot').classList.add('done');
       document.querySelector('#goalState').textContent = '階段へ';
     } else {
       setOutput('!', `${line}行目: ここには拾えるものがありません`, 'warning');
+    }
+  }
+  if (command === 'action()') {
+    if (level().target && state.x === level().target.x && state.y === level().target.y && !state.collected) {
+      state.collected = 1;
+      setOutput('◆', `${line}行目: 灯を回収しました`, 'success');
+      document.querySelector('#goalDot').classList.add('done');
+      document.querySelector('#goalState').textContent = '階段へ';
+    } else if (state.x === level().exit.x && state.y === level().exit.y && (!level().target || state.collected) && (!level().door || state.doorOpen) && (!level().mobs || state.resolvedMobs.length === level().mobs.length)) {
+      state.cleared = true;
+      setOutput('✓', `${line}行目: 階段を降りました`, 'success');
+      document.querySelector('#goalState').textContent = '達成';
+      saveProgress(currentFloor);
+      document.querySelector('#againBtn').textContent = currentFloor < Object.keys(levels).length ? '次の階層へ' : 'もう一度挑戦';
+      setTimeout(() => clearCard.classList.add('show'), 350);
+    } else if (level().npc && state.x === level().npc.x && state.y === level().npc.y) {
+      setOutput('›', `門番「合言葉を入力して、扉へ出力してみろ」`);
+    } else {
+      setOutput('!', `${line}行目: ここには操作できるものがありません`, 'warning');
+    }
+  }
+  if (command === 'input') {
+    if (!level().npc || state.x !== level().npc.x || state.y !== level().npc.y) {
+      setOutput('!', `${line}行目: 今は入力を求めているMOBがいません`, 'warning');
+    } else {
+      state.variables[commandInfo.variable] = await requestInput(commandInfo.prompt, level().npc.answer);
+      setOutput('›', `${commandInfo.variable} に入力した文字列を保存しました`);
+    }
+  }
+  if (command === 'print') {
+    let value = commandInfo.value;
+    const quoted = value.match(/^(['"])(.*)\1$/);
+    if (quoted) value = quoted[2];
+    else if (Object.hasOwn(state.variables, value)) value = state.variables[value];
+    else { setOutput('×', `${line}行目: ${value} という変数が見つかりません`, 'error'); renderDungeon(); return false; }
+    setOutput('›', String(value));
+    if (level().door && state.x === level().door.x && state.y === level().door.y) {
+      if (String(value) === level().door.password) {
+        state.doorOpen = true;
+        document.querySelector('#goalDot').classList.add('done');
+        document.querySelector('#goalState').textContent = '階段へ';
+        setOutput('✓', `${value} ― 言霊の扉が開きました`, 'success');
+      } else setOutput('!', `${value} ― 扉は反応しません`, 'warning');
+    }
+  }
+  if (command === 'attack()' || command === 'greet()') {
+    const mobIndex = (level().mobs || []).findIndex(mob => mob.x === state.x && mob.y === state.y);
+    if (mobIndex < 0 || state.resolvedMobs.includes(mobIndex)) {
+      setOutput('!', `${line}行目: ここには対応するMOBがいません`, 'warning');
+    } else {
+      const mob = level().mobs[mobIndex];
+      const correct = (mob.type === 'enemy' && command === 'attack()') || (mob.type === 'ally' && command === 'greet()');
+      if (!correct) {
+        setOutput('×', mob.type === 'enemy' ? '敵に挨拶して攻撃されました' : '同族を攻撃してしまいました', 'error');
+        renderDungeon();
+        return false;
+      }
+      state.resolvedMobs.push(mobIndex);
+      setOutput('✓', mob.type === 'enemy' ? '敵を倒しました' : '同族に挨拶しました', 'success');
     }
   }
   if (command === 'goDown()') {
@@ -297,7 +456,7 @@ async function runAll() {
   document.querySelector('#runBtn').disabled = true;
   document.querySelector('#editorState').textContent = '実行中';
   for (let index = 0; index < parsedCommands.length; index++) {
-    if (!execute(parsedCommands[index])) break;
+    if (!await execute(parsedCommands[index])) break;
     await new Promise(resolve => setTimeout(resolve, 480));
   }
   running = false;
@@ -306,7 +465,7 @@ async function runAll() {
   if (!state.cleared) setOutput('›', state.collected ? '灯を回収しました。階段へ進んで goDown() を実行しよう' : '実行完了。まだ灯を回収できていません');
 }
 
-function runStep() {
+async function runStep() {
   if (running) return;
   if (executionIndex === 0) {
     const parsed = parseCode();
@@ -323,7 +482,7 @@ function runStep() {
     setOutput('›', 'すべてのコードを実行しました');
     return;
   }
-  execute(parsedCommands[executionIndex]);
+  await execute(parsedCommands[executionIndex]);
   executionIndex++;
 }
 
@@ -332,6 +491,27 @@ function updateLineNumbers() {
   lineNumbers.innerHTML = Array.from({ length: count }, (_, index) => index + 1).join('<br>');
   document.querySelector('#editorState').textContent = '編集中';
   executionIndex = 0;
+}
+
+function requestInput(prompt, hint) {
+  return new Promise(resolve => {
+    const panel = document.querySelector('#inputPanel');
+    const field = document.querySelector('#gameInput');
+    document.querySelector('#inputPrompt').textContent = `門番「合言葉は ${hint} だ」`;
+    document.querySelector('#inputLabel').textContent = prompt;
+    field.value = '';
+    panel.classList.add('show');
+    field.focus();
+    const submit = () => {
+      panel.classList.remove('show');
+      document.querySelector('#inputSubmit').removeEventListener('click', submit);
+      field.removeEventListener('keydown', onKey);
+      resolve(field.value);
+    };
+    const onKey = event => { if (event.key === 'Enter') submit(); };
+    document.querySelector('#inputSubmit').addEventListener('click', submit);
+    field.addEventListener('keydown', onKey);
+  });
 }
 
 document.querySelectorAll('[data-insert]').forEach(button => button.addEventListener('click', () => {
@@ -356,7 +536,7 @@ document.querySelector('#referenceToggle').addEventListener('click', event => {
 document.querySelector('#runBtn').addEventListener('click', runAll);
 document.querySelector('#stepBtn').addEventListener('click', runStep);
 document.querySelector('#resetBtn').addEventListener('click', () => resetState());
-document.querySelector('#againBtn').addEventListener('click', () => currentFloor === 1 && loadProgress().cleared.includes(1) ? selectFloor(2) : resetState());
+document.querySelector('#againBtn').addEventListener('click', () => currentFloor < Object.keys(levels).length && loadProgress().cleared.includes(currentFloor) ? selectFloor(currentFloor + 1) : resetState());
 document.querySelector('#clearOutput').addEventListener('click', () => setOutput('›', '出力を消去しました'));
 document.querySelector('#birdNameTitle').textContent = GAME.birdName;
 document.querySelector('#startAdventure').addEventListener('click', () => document.querySelector('#titleScreen').classList.add('hidden'));
@@ -377,7 +557,34 @@ editor.addEventListener('keydown', event => {
   }
 });
 
+function prepareEnemySprites() {
+  const source = new Image();
+  source.onload = () => {
+    const size = Math.floor(source.width / 2);
+    const views = { down: [0, 0], up: [1, 0], left: [0, 1], right: [1, 1] };
+    Object.entries(views).forEach(([name, [column, row]]) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      context.drawImage(source, column * size, row * size, size, size, 0, 0, size, size);
+      const pixels = context.getImageData(0, 0, size, size);
+      for (let index = 0; index < pixels.data.length; index += 4) {
+        const red = pixels.data[index];
+        const green = pixels.data[index + 1];
+        const blue = pixels.data[index + 2];
+        if (green > 150 && green > red * 1.7 && green > blue * 1.7) pixels.data[index + 3] = 0;
+      }
+      context.putImageData(pixels, 0, 0);
+      enemySprites[name] = canvas.toDataURL('image/png');
+    });
+    renderDungeon();
+  };
+  source.src = 'assets/mob/enemy/sheet-chroma.png';
+}
+
 updateLineNumbers();
 renderCurriculum();
 renderTestAnswers();
 resetState(false);
+prepareEnemySprites();

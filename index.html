@@ -35,6 +35,9 @@
       </details>
     </div>
   </section>
+  <section class="input-panel" id="inputPanel" aria-live="polite">
+    <div><small>INPUT</small><strong id="inputPrompt"></strong><label id="inputLabel" for="gameInput"></label><input id="gameInput" autocomplete="off"><button id="inputSubmit" type="button">入力する</button></div>
+  </section>
   <div class="app">
     <header class="topbar">
       <a class="brand" href="#" aria-label="Code Dungeon ホーム">
@@ -53,8 +56,8 @@
         <section class="mission-card">
           <span class="section-label">MISSION</span>
           <div class="mission-icon">◆</div>
-          <h1>迷宮の灯を<br>回収せよ</h1>
-          <p>灯を拾ったら、青い階段まで進んで次の階層へ降りよう。</p>
+          <h1 id="missionTitle">迷宮の灯を回収せよ</h1>
+          <p id="missionDescription">基本命令とaction()を使い、灯を拾って階段を降りよう。</p>
           <div class="goal"><i id="goalDot"></i><span>灯を回収して階段を降りる</span><b id="goalState">未達成</b></div>
         </section>
 
@@ -66,9 +69,11 @@
             <button class="function-row" data-insert="move()"><code>move()</code><span>1マス前進</span></button>
             <button class="function-row" data-insert="turnLeft()"><code>turnLeft()</code><span>左を向く</span></button>
             <button class="function-row" data-insert="turnRight()"><code>turnRight()</code><span>右を向く</span></button>
-            <button class="function-row" data-insert="collectGet()"><code>collectGet()</code><span>足元の灯を拾う</span></button>
-            <button class="function-row" data-insert="goDown()"><code>goDown()</code><span>足元の階段を降りる</span></button>
+            <button class="function-row" data-insert="action()"><code>action()</code><span>足元のものを操作</span></button>
             <button class="function-row" id="loopReference" data-insert="for _ in range(3):&#10;    move()" hidden><code>for _ in range(3):</code><span>3回繰り返す</span></button>
+            <button class="function-row" id="printReference" data-insert="print(&quot;小さな羽根&quot;)" hidden><code>print("文字列")</code><span>文字を出力</span></button>
+            <button class="function-row" id="inputReference" data-insert="answer = input(&quot;質問：&quot;)" hidden><code>input("質問")</code><span>入力を変数へ保存</span></button>
+            <button class="function-row" id="ifReference" data-insert="if isEnemy():&#10;    attack()&#10;else:&#10;    greet()" hidden><code>if isEnemy():</code><span>敵かどうかで分岐</span></button>
             <p>関数を押すとカーソル位置へ挿入できます。まずは自分でタイプしてみよう。</p>
           </div>
         </section>
@@ -114,12 +119,12 @@ collectGet()</textarea>
         </div>
         <div class="dungeon-footer">
           <div><small>現在の向き</small><b id="directionLabel">右</b></div>
-          <div><small>実行ステップ</small><b><span id="stepCount">0</span> / 20</b></div>
-          <div><small>回収した灯</small><b class="gold">◆ <span id="gemCount">0</span> / 1</b></div>
+          <div><small>実行ステップ</small><b><span id="stepCount">0</span> / <span id="maxStepCount">20</span></b></div>
+          <div><small id="statLabel">回収した灯</small><b class="gold" id="statValue">◆ 0 / 1</b></div>
         </div>
       </section>
     </main>
   </div>
-  <script src="app.js?v=20260718-5"></script>
+  <script src="app.js?v=20260718-9"></script>
 </body>
 </html>
