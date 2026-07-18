@@ -54,8 +54,8 @@
           <span class="section-label">MISSION</span>
           <div class="mission-icon">◆</div>
           <h1>迷宮の灯を<br>回収せよ</h1>
-          <p>コードを書いてフクロウを導き、奥にある灯を拾おう。</p>
-          <div class="goal"><i id="goalDot"></i><span>灯を1つ回収する</span><b id="goalState">未達成</b></div>
+          <p>灯を拾ったら、青い階段まで進んで次の階層へ降りよう。</p>
+          <div class="goal"><i id="goalDot"></i><span>灯を回収して階段を降りる</span><b id="goalState">未達成</b></div>
         </section>
 
         <section class="reference-card">
@@ -67,6 +67,7 @@
             <button class="function-row" data-insert="turnLeft()"><code>turnLeft()</code><span>左を向く</span></button>
             <button class="function-row" data-insert="turnRight()"><code>turnRight()</code><span>右を向く</span></button>
             <button class="function-row" data-insert="collectGet()"><code>collectGet()</code><span>足元の灯を拾う</span></button>
+            <button class="function-row" data-insert="goDown()"><code>goDown()</code><span>足元の階段を降りる</span></button>
             <p>関数を押すとカーソル位置へ挿入できます。まずは自分でタイプしてみよう。</p>
           </div>
         </section>
@@ -106,7 +107,7 @@ collectGet()</textarea>
           <div class="dungeon" id="dungeon" aria-label="ダンジョン"></div>
           <div class="clear-card" id="clearCard">
             <span>QUEST COMPLETE</span>
-            <strong>灯を手に入れた！</strong>
+            <strong>階段を降りて踏破した！</strong>
             <button id="againBtn">もう一度挑戦</button>
           </div>
         </div>
@@ -118,6 +119,6 @@ collectGet()</textarea>
       </section>
     </main>
   </div>
-  <script src="app.js?v=20260718-3"></script>
+  <script src="app.js?v=20260718-4"></script>
 </body>
 </html>

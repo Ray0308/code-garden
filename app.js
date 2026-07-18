@@ -22,7 +22,15 @@ move()
 move()
 turnRight()
 move()
-collectGet()` },
+collectGet()
+move()
+move()
+move()
+move()
+move()
+turnRight()
+move()
+goDown()` },
   { floor: 2, label: '反復の石廊・想定回答', ready: false, code: `for _ in range(3):
     move()
 turnRight()
@@ -44,6 +52,7 @@ const ROWS = 10;
 const MAX_STEPS = 20;
 const start = { x: 5, y: 8, direction: 1 };
 const target = { x: 5, y: 5 };
+const exit = { x: 6, y: 0 };
 const obstacles = new Set(['1,1','3,1','0,3','6,3','2,4','3,4','1,6','3,6','6,7']);
 const directions = [
   { dx: 0, dy: 1, label: '下', sprite: 'assets/character/main-down.png' },
@@ -96,7 +105,7 @@ function renderTestAnswers() {
 }
 
 function resetState(showMessage = true) {
-  state = { ...start, collected: 0, steps: 0 };
+  state = { ...start, collected: 0, cleared: false, steps: 0 };
   parsedCommands = parseCode().commands;
   executionIndex = 0;
   running = false;
@@ -108,7 +117,7 @@ function resetState(showMessage = true) {
 }
 
 function parseCode() {
-  const valid = new Set(['move()', 'turnLeft()', 'turnRight()', 'collectGet()']);
+  const valid = new Set(['move()', 'turnLeft()', 'turnRight()', 'collectGet()', 'goDown()']);
   const commands = [];
   const errors = [];
   editor.value.split('\n').forEach((raw, index) => {
@@ -143,12 +152,12 @@ function renderDungeon() {
     dungeon.append(gem);
   }
 
-  const exit = document.createElement('div');
-  exit.className = 'dungeon-object stairs';
-  exit.style.setProperty('--x', 6);
-  exit.style.setProperty('--y', 0);
-  exit.innerHTML = '<i></i><i></i><i></i>';
-  dungeon.append(exit);
+  const stairs = document.createElement('div');
+  stairs.className = 'dungeon-object stairs';
+  stairs.style.setProperty('--x', exit.x);
+  stairs.style.setProperty('--y', exit.y);
+  stairs.innerHTML = '<i></i><i></i><i></i>';
+  dungeon.append(stairs);
 
   const hero = document.createElement('img');
   hero.className = 'dungeon-object dungeon-hero';
@@ -201,11 +210,22 @@ function execute(commandInfo) {
       state.collected = 1;
       setOutput('◆', `${line}行目: 灯を回収しました`, 'success');
       document.querySelector('#goalDot').classList.add('done');
+      document.querySelector('#goalState').textContent = '階段へ';
+    } else {
+      setOutput('!', `${line}行目: ここには拾えるものがありません`, 'warning');
+    }
+  }
+  if (command === 'goDown()') {
+    if (state.x !== exit.x || state.y !== exit.y) {
+      setOutput('!', `${line}行目: ここには下り階段がありません`, 'warning');
+    } else if (!state.collected) {
+      setOutput('!', `${line}行目: 灯を回収してから階段を降りよう`, 'warning');
+    } else {
+      state.cleared = true;
+      setOutput('✓', `${line}行目: 階段を降りました`, 'success');
       document.querySelector('#goalState').textContent = '達成';
       saveProgress(1);
       setTimeout(() => clearCard.classList.add('show'), 350);
-    } else {
-      setOutput('!', `${line}行目: ここには拾えるものがありません`, 'warning');
     }
   }
   renderDungeon();
@@ -232,8 +252,8 @@ async function runAll() {
   }
   running = false;
   document.querySelector('#runBtn').disabled = false;
-  document.querySelector('#editorState').textContent = state.collected ? 'クリア' : '実行完了';
-  if (!state.collected) setOutput('›', '実行完了。まだ灯を回収できていません');
+  document.querySelector('#editorState').textContent = state.cleared ? 'クリア' : '実行完了';
+  if (!state.cleared) setOutput('›', state.collected ? '灯を回収しました。階段へ進んで goDown() を実行しよう' : '実行完了。まだ灯を回収できていません');
 }
 
 function runStep() {
