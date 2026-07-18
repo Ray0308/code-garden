@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=20260718-2">
   <link rel="stylesheet" href="title.css?v=20260718-1">
-  <link rel="stylesheet" href="answers.css?v=20260718-1">
+  <link rel="stylesheet" href="answers.css?v=20260718-2">
 </head>
 <body>
   <section class="title-screen" id="titleScreen">
@@ -68,6 +68,7 @@
             <button class="function-row" data-insert="turnRight()"><code>turnRight()</code><span>右を向く</span></button>
             <button class="function-row" data-insert="collectGet()"><code>collectGet()</code><span>足元の灯を拾う</span></button>
             <button class="function-row" data-insert="goDown()"><code>goDown()</code><span>足元の階段を降りる</span></button>
+            <button class="function-row" id="loopReference" data-insert="for _ in range(3):&#10;    move()" hidden><code>for _ in range(3):</code><span>3回繰り返す</span></button>
             <p>関数を押すとカーソル位置へ挿入できます。まずは自分でタイプしてみよう。</p>
           </div>
         </section>
@@ -119,6 +120,6 @@ collectGet()</textarea>
       </section>
     </main>
   </div>
-  <script src="app.js?v=20260718-4"></script>
+  <script src="app.js?v=20260718-5"></script>
 </body>
 </html>
