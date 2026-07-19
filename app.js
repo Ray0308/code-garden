@@ -4,15 +4,21 @@ const output = document.querySelector('#output');
 const lineNumbers = document.querySelector('#lineNumbers');
 const clearCard = document.querySelector('#clearCard');
 const GAME = { birdName: 'フォっくん', storageKey: 'code-dungeon-progress-v1' };
+const PASSWORDS = ['月影','星屑','朝霧','白銀','紅葉','青空','夕凪','雪月','若葉','灯火'];
 const curriculum = [
+  { floor: 0, title: 'はじまりの間', topic: '操作チュートリアル', syntax: 'move() / action()' },
   { floor: 1, title: '灯火の回廊', topic: '基本命令とaction', syntax: 'move() / action()' },
-  { floor: 2, title: '反復の石廊', topic: '同じ処理を繰り返す', syntax: 'for _ in range(3):' },
-  { floor: 3, title: '言霊の扉', topic: '文字列を扉へ出力する', syntax: 'print("合言葉")' },
-  { floor: 4, title: '問いかけの門', topic: '入力を変数に保存する', syntax: 'answer = input("質問")' },
-  { floor: 5, title: '魔物の回廊', topic: '敵と同族で行動を変える', syntax: 'if isEnemy():' }
+  { floor: 2, title: '言霊の扉', topic: '文字列を扉へ出力する', syntax: 'print("合言葉")' },
+  { floor: 3, title: '問いかけの門', topic: '入力を変数に保存する', syntax: 'password = input()' },
+  { floor: 4, title: '反復の石廊', topic: '同じ処理を繰り返す', syntax: 'for _ in range(3):' },
+  { floor: 5, title: '魔物の回廊', topic: '変数の値で行動を変える', syntax: 'if mob == "enemy":' }
 ];
 
 const testAnswers = [
+  { floor: 0, label: 'はじまりの間・完全回答', ready: true, code: `move()
+action()
+move()
+action()` },
   { floor: 1, label: '灯火の回廊・完全回答', ready: true, code: `move()
 move()
 turnLeft()
@@ -32,7 +38,29 @@ move()
 turnRight()
 move()
 action()` },
-  { floor: 2, label: '反復の石廊・完全回答', ready: true, code: `for _ in range(4):
+  { floor: 2, label: '言霊の扉・完全回答', ready: true, code: `move()
+move()
+move()
+print("小さな羽根")
+move()
+move()
+move()
+action()` },
+  { floor: 3, label: '問いかけの門・完全回答', ready: true, code: `move()
+move()
+move()
+password = input()
+turnRight()
+move()
+move()
+move()
+print(password)
+turnLeft()
+move()
+move()
+move()
+action()` },
+  { floor: 4, label: '反復の石廊・完全回答', ready: true, code: `for _ in range(4):
     move()
 turnRight()
 for _ in range(3):
@@ -42,26 +70,10 @@ turnLeft()
 for _ in range(2):
     move()
 action()` },
-  { floor: 3, label: '言霊の扉・完全回答', ready: true, code: `for _ in range(3):
-    move()
-print("小さな羽根")
-for _ in range(3):
-    move()
-action()` },
-  { floor: 4, label: '問いかけの門・完全回答', ready: true, code: `for _ in range(3):
-    move()
-password = input("合言葉：")
-turnRight()
-for _ in range(3):
-    move()
-print(password)
-turnLeft()
-for _ in range(3):
-    move()
-action()` },
   { floor: 5, label: '魔物の回廊・完全回答', ready: true, code: `for _ in range(3):
     move()
-    if isEnemy():
+    mob = input()
+    if mob == "enemy":
         attack()
     else:
         greet()
@@ -72,11 +84,12 @@ action()` }
 const COLS = 8;
 const ROWS = 10;
 const levels = {
+  0: { title: 'はじまりの間', mission: '操作に慣れよう', description: 'この階層は評価対象外です。move()で進み、action()で灯と階段を操作してみよう。分からなければ講師へ聞いてください。', start: { x: 3, y: 7, direction: 2 }, target: { x: 3, y: 6 }, exit: { x: 3, y: 5 }, maxSteps: 6, obstacles: [], starter: '# まずは1マス進んで灯を調べよう\nmove()\naction()', goal: '基本操作を試す' },
   1: { title: '灯火の回廊', mission: '迷宮の灯を回収せよ', description: '基本命令とaction()を使い、灯を拾って階段を降りよう。', start: { x: 5, y: 8, direction: 1 }, target: { x: 5, y: 5 }, exit: { x: 6, y: 0 }, maxSteps: 20, obstacles: ['1,1','3,1','0,3','6,3','2,4','3,4','1,6','3,6','6,7'], starter: '# 灯を回収して階段を降りよう\nmove()\nmove()', goal: '灯を回収して階段を降りる' },
-  2: { title: '反復の石廊', mission: '反復で石廊を抜けよ', description: 'move()の連打をforに置き換え、長い通路を攻略しよう。', start: { x: 1, y: 8, direction: 2 }, target: { x: 4, y: 4 }, exit: { x: 4, y: 2 }, maxSteps: 20, obstacles: ['0,2','2,2','6,2','6,3','2,5','6,5','2,6','4,7','6,8'], starter: '# 同じ命令は for で繰り返そう\nfor _ in range(4):\n    move()', goal: 'forを使って灯を回収する' },
-  3: { title: '言霊の扉', mission: '言霊を扉へ出力せよ', description: '扉の前で「小さな羽根」という文字列をprint()し、封印を解こう。', start: { x: 3, y: 8, direction: 2 }, exit: { x: 3, y: 2 }, door: { x: 3, y: 5, password: '小さな羽根' }, maxSteps: 20, obstacles: ['1,2','5,2','1,4','5,4','1,6','5,6','1,8','5,8'], starter: '# 問題文の文字列を扉の前で出力しよう\nfor _ in range(3):\n    move()', goal: 'print()で言霊の扉を開く' },
-  4: { title: '問いかけの門', mission: '門番の言葉を届けよ', description: 'input()で受け取った言葉を変数へ保存し、扉へprint()しよう。', start: { x: 1, y: 8, direction: 2 }, exit: { x: 4, y: 2 }, npc: { x: 1, y: 5, answer: '月影' }, door: { x: 4, y: 5, password: '月影' }, maxSteps: 25, obstacles: ['0,3','2,3','6,3','0,7','6,7'], starter: '# 門番の問いに答え、変数へ保存しよう\nfor _ in range(3):\n    move()', goal: 'input()の答えを扉へ出力する' },
-  5: { title: '魔物の回廊', mission: '敵と同族を見極めよ', description: 'isEnemy()で判定し、敵には攻撃、同族には挨拶しよう。', start: { x: 3, y: 8, direction: 2 }, exit: { x: 3, y: 4 }, mobs: [{ x: 3, y: 7, type: 'enemy' },{ x: 3, y: 6, type: 'ally' },{ x: 3, y: 5, type: 'enemy' }], maxSteps: 30, obstacles: ['1,4','5,4','1,6','5,6','1,8','5,8'], starter: '# 敵なら攻撃、同族なら挨拶しよう\nfor _ in range(3):\n    move()', goal: 'ifで3体のMOBに対応する' }
+  2: { title: '言霊の扉', mission: '言霊を扉へ出力せよ', description: '扉の前で「小さな羽根」という文字列をprint()し、封印を解こう。', start: { x: 3, y: 8, direction: 2 }, exit: { x: 3, y: 2 }, door: { x: 3, y: 5, password: '小さな羽根' }, maxSteps: 20, obstacles: ['1,2','5,2','1,4','5,4','1,6','5,6','1,8','5,8'], starter: '# 問題文の文字列を扉の前で出力しよう\nmove()\nmove()', goal: 'print()で言霊の扉を開く' },
+  3: { title: '問いかけの門', mission: '入力を保存して届けよ', description: '門番が送る文字列をinput()で受け取り、変数へ保存して扉へprint()しよう。', start: { x: 1, y: 8, direction: 2 }, exit: { x: 4, y: 2 }, npc: { x: 1, y: 5 }, door: { x: 4, y: 5, password: '' }, maxSteps: 25, obstacles: ['0,3','2,3','6,3','0,7','6,7'], starter: '# 門番から受け取った値を変数へ保存しよう\nmove()\nmove()', goal: 'input()の値を扉へ出力する' },
+  4: { title: '反復の石廊', mission: '反復で石廊を抜けよ', description: 'move()の連打をforに置き換え、長い通路を攻略しよう。', start: { x: 1, y: 8, direction: 2 }, target: { x: 4, y: 4 }, exit: { x: 4, y: 2 }, maxSteps: 20, obstacles: ['0,2','2,2','6,2','6,3','2,5','6,5','2,6','4,7','6,8'], starter: '# 同じ命令は for で繰り返そう\nfor _ in range(4):\n    move()', goal: 'forを使って灯を回収する' },
+  5: { title: '魔物の回廊', mission: '敵と同族を見極めよ', description: 'input()でMOBの種類を変数へ保存し、ifで敵と同族への行動を変えよう。', start: { x: 3, y: 8, direction: 2 }, exit: { x: 3, y: 4 }, mobs: [{ x: 3, y: 7, type: 'enemy' },{ x: 3, y: 6, type: 'ally' },{ x: 3, y: 5, type: 'enemy' }], maxSteps: 35, obstacles: ['1,4','5,4','1,6','5,6','1,8','5,8'], starter: '# MOBの種類を変数へ保存して判断しよう\nfor _ in range(3):\n    move()', goal: '変数とifで3体のMOBに対応する' }
 };
 const directions = [
   { dx: 0, dy: 1, label: '下', sprite: 'assets/character/main-down.png' },
@@ -91,6 +104,9 @@ let executionIndex = 0;
 let running = false;
 let currentFloor = 1;
 let enemySprites = {};
+let trainingSession = null;
+let floorStartedAt = Date.now();
+let trainingTimer = null;
 
 function level() { return levels[currentFloor]; }
 
@@ -110,7 +126,7 @@ function renderCurriculum() {
   const progress = loadProgress();
   document.querySelector('#floorList').innerHTML = curriculum.map(item => {
     const cleared = progress.cleared.includes(item.floor);
-    const unlocked = item.floor === 1 || progress.cleared.includes(item.floor - 1);
+    const unlocked = item.floor <= 1 || progress.cleared.includes(item.floor - 1);
     const playable = Boolean(levels[item.floor]);
     return `<article data-floor="${item.floor}" class="floor-card ${cleared ? 'cleared' : ''} ${unlocked && playable ? 'selectable' : 'locked'}"><span>FLOOR ${String(item.floor).padStart(2, '0')}</span><div><strong>${item.title}</strong><small>${item.topic}</small><code>${item.syntax}</code></div><b>${cleared ? '✓ CLEAR' : unlocked && playable ? '挑戦可能' : '🔒'}</b></article>`;
   }).join('');
@@ -118,15 +134,21 @@ function renderCurriculum() {
 }
 
 function selectFloor(floor) {
+  if (!trainingSession) {
+    document.querySelector('#recordsModal').classList.remove('show');
+    document.querySelector('#startError').textContent = '先にお名前を入力して研修を開始してください';
+    return;
+  }
   if (!levels[floor]) return;
   const progress = loadProgress();
   if (floor > 1 && !progress.cleared.includes(floor - 1)) return;
   currentFloor = floor;
+  if (floor === 3 && trainingSession) level().door.password = trainingSession.password;
   document.querySelector('.chapter small').textContent = `CHAPTER ${String(floor).padStart(2, '0')}`;
   document.querySelector('.chapter strong').textContent = level().title;
-  document.querySelector('#loopReference').hidden = floor < 2;
-  document.querySelector('#printReference').hidden = floor < 3;
-  document.querySelector('#inputReference').hidden = floor < 4;
+  document.querySelector('#loopReference').hidden = floor < 4;
+  document.querySelector('#printReference').hidden = floor < 2;
+  document.querySelector('#inputReference').hidden = floor < 3;
   document.querySelector('#ifReference').hidden = floor < 5;
   document.querySelector('#missionTitle').textContent = level().mission;
   document.querySelector('#missionDescription').textContent = level().description;
@@ -135,12 +157,21 @@ function selectFloor(floor) {
   document.querySelector('#recordsModal').classList.remove('show');
   document.querySelector('#recordsModal').setAttribute('aria-hidden', 'true');
   document.querySelector('#titleScreen').classList.add('hidden');
+  const lesson = curriculum.find(item => item.floor === floor);
+  document.querySelector('#lessonFloor').textContent = floor === 0 ? 'TUTORIAL' : `FLOOR ${String(floor).padStart(2, '0')}`;
+  document.querySelector('#lessonTitle').textContent = level().title;
+  document.querySelector('#lessonDescription').textContent = level().description;
+  document.querySelector('#lessonSyntax').textContent = lesson?.syntax || '';
+  document.querySelector('#lessonModal').classList.add('show');
+  document.querySelector('#lessonModal').setAttribute('aria-hidden', 'false');
+  floorStartedAt = Date.now();
   updateLineNumbers();
   resetState();
 }
 
 function renderTestAnswers() {
   const answerList = document.querySelector('#answerList');
+  if (!answerList) return;
   answerList.innerHTML = testAnswers.map((answer, index) => `
     <article class="answer-card">
       <div><strong>FLOOR ${String(answer.floor).padStart(2, '0')}　${answer.label}</strong><small>${answer.ready ? '現在のゲームで動作確認済み' : '階層実装後の確認用'}</small></div>
@@ -156,8 +187,80 @@ function renderTestAnswers() {
   });
 }
 
+function startTraining(firstFloor) {
+  const name = document.querySelector('#traineeName').value.trim();
+  const consent = document.querySelector('#recordConsent').checked;
+  const error = document.querySelector('#startError');
+  if (!name) { error.textContent = 'お名前を入力してください'; return; }
+  if (!consent) { error.textContent = '記録内容を確認してチェックしてください'; return; }
+  const startedAt = new Date().toISOString();
+  trainingSession = {
+    id: globalThis.crypto?.randomUUID?.() || `session-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name,
+    startedAt,
+    password: PASSWORDS[Math.floor(Math.random() * PASSWORDS.length)]
+  };
+  localStorage.setItem('code-garden-current-session', JSON.stringify(trainingSession));
+  localStorage.setItem(GAME.storageKey, JSON.stringify({ cleared: [] }));
+  error.textContent = '';
+  startTrainingTimer();
+  selectFloor(firstFloor);
+}
+
+function startTrainingTimer() {
+  clearInterval(trainingTimer);
+  const deadline = Date.now() + 30 * 60 * 1000;
+  const update = () => {
+    const remaining = Math.max(0, deadline - Date.now());
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    document.querySelector('#trainingTimer').textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    if (!remaining) {
+      clearInterval(trainingTimer);
+      setOutput('!', '30分が経過しました。現在の状況を講師へ報告してください', 'warning');
+    }
+  };
+  update();
+  trainingTimer = setInterval(update, 1000);
+}
+
+function recordFloorCompletion() {
+  if (!trainingSession || state.recorded) return;
+  state.recorded = true;
+  const payload = {
+    sessionId: trainingSession.id,
+    name: trainingSession.name,
+    sessionStartedAt: trainingSession.startedAt,
+    floor: currentFloor,
+    floorTitle: level().title,
+    floorStartedAt: new Date(floorStartedAt).toISOString(),
+    completedAt: new Date().toISOString(),
+    elapsedSeconds: Math.max(0, Math.round((Date.now() - floorStartedAt) / 1000)),
+    sourceCode: editor.value
+  };
+  const queueKey = 'code-garden-record-queue';
+  const queue = JSON.parse(localStorage.getItem(queueKey) || '[]');
+  queue.push(payload);
+  localStorage.setItem(queueKey, JSON.stringify(queue));
+  flushRecordQueue();
+}
+
+async function flushRecordQueue() {
+  const endpoint = window.CODE_GARDEN_RECORD_ENDPOINT;
+  if (!endpoint) return;
+  const queueKey = 'code-garden-record-queue';
+  const queue = JSON.parse(localStorage.getItem(queueKey) || '[]');
+  while (queue.length) {
+    try {
+      await fetch(endpoint, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(queue[0]) });
+      queue.shift();
+      localStorage.setItem(queueKey, JSON.stringify(queue));
+    } catch { break; }
+  }
+}
+
 function resetState(showMessage = true) {
-  state = { ...level().start, collected: 0, cleared: false, doorOpen: false, steps: 0, variables: {}, resolvedMobs: [] };
+  state = { ...level().start, collected: 0, cleared: false, recorded: false, doorOpen: false, steps: 0, variables: {}, resolvedMobs: [] };
   parsedCommands = parseCode().commands;
   executionIndex = 0;
   running = false;
@@ -186,7 +289,7 @@ function parseCode() {
 
       const loop = text.match(/^for\s+_\s+in\s+range\((\d+)\):$/);
       if (loop) {
-        if (currentFloor < 2) errors.push({ line: index + 1, text: 'for は第2階層で解放されます' });
+        if (currentFloor < 4) errors.push({ line: index + 1, text: 'for は第4階層で解放されます' });
         const parsed = parseBlock(index + 1, indent + 4);
         const repeat = Number(loop[1]);
         if (!parsed.commands.length) errors.push({ line: index + 1, text: 'for の中にインデントした命令が必要です' });
@@ -196,7 +299,8 @@ function parseCode() {
         continue;
       }
 
-      if (text === 'if isEnemy():') {
+      const condition = text.match(/^if\s+([A-Za-z_]\w*)\s*==\s*(['"])(.*?)\2:$/);
+      if (condition) {
         if (currentFloor < 5) errors.push({ line: index + 1, text: 'if は第5階層で解放されます' });
         const thenBlock = parseBlock(index + 1, indent + 4);
         index = thenBlock.index;
@@ -206,15 +310,15 @@ function parseCode() {
           elseCommands = elseBlock.commands;
           index = elseBlock.index;
         } else errors.push({ line: index + 1, text: 'if に対応する else: が必要です' });
-        commands.push({ command: 'conditional', line: startIndex + 1, thenCommands: thenBlock.commands, elseCommands });
+        commands.push({ command: 'conditional', line: index + 1, variable: condition[1], expected: condition[3], thenCommands: thenBlock.commands, elseCommands });
         continue;
       }
 
-      const input = text.match(/^([A-Za-z_]\w*)\s*=\s*input\((['"])(.*?)\2\)$/);
-      if (input && currentFloor < 4) errors.push({ line: index + 1, text: 'input は第4階層で解放されます' });
-      if (input) { commands.push({ command: 'input', variable: input[1], prompt: input[3], line: index + 1 }); index++; continue; }
+      const input = text.match(/^([A-Za-z_]\w*)\s*=\s*input\(\s*\)$/);
+      if (input && currentFloor < 3) errors.push({ line: index + 1, text: 'input は第3階層で解放されます' });
+      if (input) { commands.push({ command: 'input', variable: input[1], line: index + 1 }); index++; continue; }
       const print = text.match(/^print\((.+)\)$/);
-      if (print && currentFloor < 3) errors.push({ line: index + 1, text: 'print は第3階層で解放されます' });
+      if (print && currentFloor < 2) errors.push({ line: index + 1, text: 'print は第2階層で解放されます' });
       if (print) { commands.push({ command: 'print', value: print[1].trim(), line: index + 1 }); index++; continue; }
       if (valid.has(text)) commands.push({ command: text, line: index + 1 });
       else errors.push({ line: index + 1, text });
@@ -316,9 +420,11 @@ function setOutput(mark, message, type = '') {
 async function execute(commandInfo) {
   const { command, line } = commandInfo;
   if (command === 'conditional') {
-    const mobIndex = (level().mobs || []).findIndex(mob => mob.x === state.x && mob.y === state.y);
-    const isEnemy = mobIndex >= 0 && level().mobs[mobIndex].type === 'enemy';
-    const branch = isEnemy ? commandInfo.thenCommands : commandInfo.elseCommands;
+    if (!Object.hasOwn(state.variables, commandInfo.variable)) {
+      setOutput('×', `${line}行目: ${commandInfo.variable} という変数が見つかりません`, 'error');
+      return false;
+    }
+    const branch = String(state.variables[commandInfo.variable]) === commandInfo.expected ? commandInfo.thenCommands : commandInfo.elseCommands;
     for (const nested of branch) if (!await execute(nested)) return false;
     return true;
   }
@@ -375,7 +481,8 @@ async function execute(commandInfo) {
       setOutput('✓', `${line}行目: 階段を降りました`, 'success');
       document.querySelector('#goalState').textContent = '達成';
       saveProgress(currentFloor);
-      document.querySelector('#againBtn').textContent = currentFloor < Object.keys(levels).length ? '次の階層へ' : 'もう一度挑戦';
+      recordFloorCompletion();
+      document.querySelector('#againBtn').textContent = currentFloor < Math.max(...Object.keys(levels).map(Number)) ? '次の階層へ' : 'もう一度挑戦';
       setTimeout(() => clearCard.classList.add('show'), 350);
     } else if (level().npc && state.x === level().npc.x && state.y === level().npc.y) {
       setOutput('›', `門番「合言葉を入力して、扉へ出力してみろ」`);
@@ -384,11 +491,17 @@ async function execute(commandInfo) {
     }
   }
   if (command === 'input') {
-    if (!level().npc || state.x !== level().npc.x || state.y !== level().npc.y) {
-      setOutput('!', `${line}行目: 今は入力を求めているMOBがいません`, 'warning');
+    const mobIndex = (level().mobs || []).findIndex(mob => mob.x === state.x && mob.y === state.y);
+    if (level().npc && state.x === level().npc.x && state.y === level().npc.y) {
+      const password = trainingSession?.password || PASSWORDS[0];
+      state.variables[commandInfo.variable] = password;
+      level().door.password = password;
+      setOutput('›', `門番から受け取った文字列を ${commandInfo.variable} に保存しました`);
+    } else if (mobIndex >= 0 && !state.resolvedMobs.includes(mobIndex)) {
+      state.variables[commandInfo.variable] = level().mobs[mobIndex].type;
+      setOutput('›', `MOBの種類を ${commandInfo.variable} に保存しました`);
     } else {
-      state.variables[commandInfo.variable] = await requestInput(commandInfo.prompt, level().npc.answer);
-      setOutput('›', `${commandInfo.variable} に入力した文字列を保存しました`);
+      setOutput('!', `${line}行目: 受け取れる入力データがありません`, 'warning');
     }
   }
   if (command === 'print') {
@@ -433,6 +546,7 @@ async function execute(commandInfo) {
       setOutput('✓', `${line}行目: 階段を降りました`, 'success');
       document.querySelector('#goalState').textContent = '達成';
       saveProgress(currentFloor);
+      recordFloorCompletion();
       document.querySelector('#againBtn').textContent = currentFloor === 1 ? '次の階層へ' : 'もう一度挑戦';
       setTimeout(() => clearCard.classList.add('show'), 350);
     }
@@ -536,10 +650,12 @@ document.querySelector('#referenceToggle').addEventListener('click', event => {
 document.querySelector('#runBtn').addEventListener('click', runAll);
 document.querySelector('#stepBtn').addEventListener('click', runStep);
 document.querySelector('#resetBtn').addEventListener('click', () => resetState());
-document.querySelector('#againBtn').addEventListener('click', () => currentFloor < Object.keys(levels).length && loadProgress().cleared.includes(currentFloor) ? selectFloor(currentFloor + 1) : resetState());
+document.querySelector('#againBtn').addEventListener('click', () => currentFloor < Math.max(...Object.keys(levels).map(Number)) && loadProgress().cleared.includes(currentFloor) ? selectFloor(currentFloor + 1) : resetState());
 document.querySelector('#clearOutput').addEventListener('click', () => setOutput('›', '出力を消去しました'));
 document.querySelector('#birdNameTitle').textContent = GAME.birdName;
-document.querySelector('#startAdventure').addEventListener('click', () => document.querySelector('#titleScreen').classList.add('hidden'));
+document.querySelector('#startTutorial').addEventListener('click', () => startTraining(0));
+document.querySelector('#skipTutorial').addEventListener('click', () => startTraining(1));
+document.querySelector('#lessonStart').addEventListener('click', () => { document.querySelector('#lessonModal').classList.remove('show'); document.querySelector('#lessonModal').setAttribute('aria-hidden', 'true'); });
 document.querySelector('#openRecords').addEventListener('click', () => { renderCurriculum(); document.querySelector('#recordsModal').classList.add('show'); document.querySelector('#recordsModal').setAttribute('aria-hidden', 'false'); });
 document.querySelector('#closeRecords').addEventListener('click', () => { document.querySelector('#recordsModal').classList.remove('show'); document.querySelector('#recordsModal').setAttribute('aria-hidden', 'true'); });
 editor.addEventListener('input', updateLineNumbers);

@@ -18,8 +18,10 @@
       <span class="title-kicker">CODE-BASED DUNGEON</span>
       <h1><span id="birdNameTitle">フォっくん</span>の<br>迷宮写経</h1>
       <div class="title-hero"><img src="assets/character/main-down.png" alt="冒険するフクロウ"><i></i><b></b></div>
-      <p>小さな羽根と、書いたコードで、迷宮の奥へ。</p>
-      <button class="title-primary" id="startAdventure">冒険をはじめる</button>
+      <p>30分の体験研修です。分からないことは、いつでも講師へ聞いてください。</p>
+      <div class="trainee-form"><label for="traineeName">お名前</label><input id="traineeName" autocomplete="name" placeholder="例：山田 太郎"><label class="record-consent"><input type="checkbox" id="recordConsent"> 研修記録として進捗・提出コードを保存することを確認しました</label><small id="startError"></small></div>
+      <button class="title-primary" id="startTutorial">チュートリアルから始める</button>
+      <button class="title-secondary" id="skipTutorial">1階層から始める</button>
       <button class="title-secondary" id="openRecords">戦績・学習記録</button>
       <small class="version">PROTOTYPE v0.2</small>
     </div>
@@ -29,12 +31,9 @@
       <div class="records-head"><div><small>LEARNING PATH</small><h2>迷宮の攻略記録</h2></div><button id="closeRecords">×</button></div>
       <div class="floor-list" id="floorList"></div>
       <p class="records-note">階層を進むたび、実際のPython構文が解放されます。</p>
-      <details class="test-answers">
-        <summary>テスト用・回答一覧</summary>
-        <div id="answerList"></div>
-      </details>
     </div>
   </section>
+  <section class="lesson-modal" id="lessonModal" aria-hidden="true"><div><small id="lessonFloor"></small><h2 id="lessonTitle"></h2><p id="lessonDescription"></p><pre><code id="lessonSyntax"></code></pre><p>困ったときは、目の前の講師へ相談してください。</p><button id="lessonStart" type="button">この階層を始める</button></div></section>
   <section class="input-panel" id="inputPanel" aria-live="polite">
     <div><small>INPUT</small><strong id="inputPrompt"></strong><label id="inputLabel" for="gameInput"></label><input id="gameInput" autocomplete="off"><button id="inputSubmit" type="button">入力する</button></div>
   </section>
@@ -46,6 +45,7 @@
       </a>
       <div class="chapter"><small>CHAPTER 01</small><strong>灯火の回廊</strong></div>
       <div class="top-actions">
+        <span class="language">残り <b id="trainingTimer">30:00</b></span>
         <span class="language">Python</span>
         <button id="resetBtn" class="ghost-button">↺ リセット</button>
       </div>
@@ -72,8 +72,8 @@
             <button class="function-row" data-insert="action()"><code>action()</code><span>足元のものを操作</span></button>
             <button class="function-row" id="loopReference" data-insert="for _ in range(3):&#10;    move()" hidden><code>for _ in range(3):</code><span>3回繰り返す</span></button>
             <button class="function-row" id="printReference" data-insert="print(&quot;&quot;)" hidden><code>print("文字列")</code><span>文字を出力</span></button>
-            <button class="function-row" id="inputReference" data-insert="answer = input(&quot;質問：&quot;)" hidden><code>input("質問")</code><span>入力を変数へ保存</span></button>
-            <button class="function-row" id="ifReference" data-insert="if isEnemy():&#10;    attack()&#10;else:&#10;    greet()" hidden><code>if isEnemy():</code><span>敵かどうかで分岐</span></button>
+            <button class="function-row" id="inputReference" data-insert="value = input()" hidden><code>input()</code><span>入力を変数へ保存</span></button>
+            <button class="function-row" id="ifReference" data-insert="if mob == &quot;enemy&quot;:&#10;    attack()&#10;else:&#10;    greet()" hidden><code>if mob == "enemy":</code><span>値によって分岐</span></button>
             <p>関数を押すとカーソル位置へ挿入できます。まずは自分でタイプしてみよう。</p>
           </div>
         </section>
@@ -125,6 +125,7 @@ collectGet()</textarea>
       </section>
     </main>
   </div>
-  <script src="app.js?v=20260719-1"></script>
+  <script src="config.js?v=20260719-1"></script>
+  <script src="app.js?v=20260719-2"></script>
 </body>
 </html>

@@ -1,0 +1,1 @@
+window.CODE_GARDEN_RECORD_ENDPOINT = '';
